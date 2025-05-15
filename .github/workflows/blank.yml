@@ -8,34 +8,36 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check XML variables for CamelCase format
+      - name: Check XML variable names for CamelCase
         run: |
-          echo "🔍 Checking <variable>...</variable> tags for CamelCase naming..."
+          echo "🔍 Checking <variable> tags in XML files for CamelCase naming..."
 
           violations=0
+
+          # Find all XML files in the repo
           while IFS= read -r file; do
             echo "📄 Scanning: $file"
-            # Extract values of <variable>...</variable>
-            grep -oP '<variable>\K[^<]+' "$file" | while read -r varname; do
-              # Skip constants or private vars (optional logic)
-              if [[ "$varname" =~ ^[A-Z0-9_]+$ || "$varname" =~ ^_ ]]; then
-                continue
-              fi
 
-              # Check CamelCase pattern
+            # Extract variable names from <variable>...</variable>
+            grep -oP '<variable>\K[^<]+' "$file" | while read -r varname; do
+
+              # CamelCase check: starts with lowercase, then optional Pascal-style parts
               if [[ ! "$varname" =~ ^[a-z]+([A-Z][a-z0-9]*)*$ ]]; then
-                echo "❌ Non-CamelCase variable: $varname (in $file)"
+                echo "❌ Non-CamelCase variable: '$varname' (in $file)"
                 violations=$((violations + 1))
               fi
+
             done
+
           done < <(find . -type f -name "*.xml")
 
           if [ $violations -gt 0 ]; then
             echo "❌ Found $violations variable(s) not using CamelCase."
             exit 1
           else
-            echo "✅ All <variable> values follow CamelCase format."
+            echo "✅ All variable names follow CamelCase format."
           fi
