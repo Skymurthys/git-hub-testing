@@ -8,26 +8,23 @@ on:
 jobs:
   validate-naming:
     runs-on: ubuntu-latest
-    shell: bash
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Validate project names for kebab-case
+        shell: bash
         run: |
           echo "🔍 Starting TIBCO BW6 naming convention validation..."
 
           violations=0
 
           is_kebab_case() {
-            # Only lowercase letters, numbers, and hyphens allowed
-            # Must start/end with letter or number, no consecutive hyphens
             [[ "$1" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]
           }
 
-          IFS=$'\n' # To safely iterate over filenames with spaces
-
+          IFS=$'\n'
           project_files=($(find . -type f \( -name ".project" -o -name "*.project" \)))
           echo "🔎 Found ${#project_files[@]} project files."
 
@@ -44,7 +41,6 @@ jobs:
               continue
             fi
 
-            # Strip known suffixes
             if [[ "$proj_name" == *.module ]]; then
               core_name="${proj_name%.module}"
               suffix=".module"
