@@ -1,43 +1,66 @@
-name: CI
+name: Validate TIBCO BW6 Names
 
+# Trigger only on push to the main branch
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
-  build:
+  validate-names:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Check XML variable names for CamelCase
+      - name: Validate Application/Module/Shared Module Names (kebab-case)
         run: |
-          echo "🔍 Checking <variable> tags in XML files for CamelCase naming..."
+          echo "🔍 Validating .application, .module, .sharedmodule files for kebab-case naming..."
 
           violations=0
 
-          # Find all XML files in the repo
-          while IFS= read -r file; do
-            echo "📄 Scanning: $file"
+          validate_kebab_case() {
+            local file="$1"
+            local type="$2"
+            local name
 
-            # Extract variable names from <variable>...</variable>
-            grep -oP '<variable>\K[^<]+' "$file" | while read -r varname; do
+            # Extract the <name> value
+            name=$(grep -oPm1 '(?<=<name>)[^<]+' "$file")
 
-              # CamelCase check: starts with lowercase, then optional Pascal-style parts
-              if [[ ! "$varname" =~ ^[a-z]+([A-Z][a-z0-9]*)*$ ]]; then
-                echo "❌ Non-CamelCase variable: '$varname' (in $file)"
-                violations=$((violations + 1))
-              fi
+            if [[ -z "$name" ]]; then
+              echo "⚠️  No <name> tag found in $file"
+              violations=$((violations + 1))
+              return
+            fi
 
-            done
+            echo "📛 Found $type name: $name"
 
-          done < <(find . -type f -name "*.xml")
+            # Kebab-case regex
+            if [[ ! "$name" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+              echo "❌ Invalid $type name '$name' in $file (not kebab-case)"
+              violations=$((violations + 1))
+            fi
+          }
+
+          # Validate .application files
+          find . -type f -name "*.application" | while read -r file; do
+            validate_kebab_case "$file" "Application"
+          done
+
+          # Validate .module files
+          find . -type f -name "*.module" | while read -r file; do
+            validate_kebab_case "$file" "Module"
+          done
+
+          # Validate .sharedmodule files
+          find . -type f -name "*.sharedmodule" | while read -r file; do
+            validate_kebab_case "$file" "SharedModule"
+          done
 
           if [ $violations -gt 0 ]; then
-            echo "❌ Found $violations variable(s) not using CamelCase."
+            echo "❌ Found $violations invalid name(s). Please use kebab-case (e.g. 'order-service')."
             exit 1
           else
-            echo "✅ All variable names follow CamelCase format."
+            echo "✅ All names follow kebab-case."
           fi
