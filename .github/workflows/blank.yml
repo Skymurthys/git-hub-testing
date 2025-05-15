@@ -1,66 +1,67 @@
-name: Validate TIBCO BW6 Names
+name: Validate TIBCO BW6 Naming Conventions
 
-# Trigger only on push to the main branch
 on:
   push:
     branches:
       - main
 
 jobs:
-  validate-names:
+  validate-naming:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Validate Application/Module/Shared Module Names (kebab-case)
+      - name: Validate Application/Module/Parent Project Names
         run: |
-          echo "🔍 Validating .application, .module, .sharedmodule files for kebab-case naming..."
+          echo "🔍 Starting validation of TIBCO BW6 project names..."
 
           violations=0
 
-          validate_kebab_case() {
-            local file="$1"
-            local type="$2"
-            local name
-
-            # Extract the <name> value
-            name=$(grep -oPm1 '(?<=<name>)[^<]+' "$file")
-
-            if [[ -z "$name" ]]; then
-              echo "⚠️  No <name> tag found in $file"
-              violations=$((violations + 1))
-              return
-            fi
-
-            echo "📛 Found $type name: $name"
-
-            # Kebab-case regex
-            if [[ ! "$name" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
-              echo "❌ Invalid $type name '$name' in $file (not kebab-case)"
-              violations=$((violations + 1))
-            fi
+          is_kebab_case() {
+            [[ "$1" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]
           }
 
-          # Validate .application files
-          find . -type f -name "*.application" | while read -r file; do
-            validate_kebab_case "$file" "Application"
-          done
+          # Find all relevant .project or *.project files
+          find . -type f \( -name ".project" -o -name "*.project" \) | while read -r project_file; do
+            folder_path=$(dirname "$project_file")
+            folder_name=$(basename "$folder_path")
 
-          # Validate .module files
-          find . -type f -name "*.module" | while read -r file; do
-            validate_kebab_case "$file" "Module"
-          done
+            proj_name=$(grep -oPm1 '(?<=<name>)[^<]+' "$project_file" || echo "")
 
-          # Validate .sharedmodule files
-          find . -type f -name "*.sharedmodule" | while read -r file; do
-            validate_kebab_case "$file" "SharedModule"
+            echo "📂 Found folder: $folder_name"
+            echo "📄 Found project name in XML: $proj_name"
+
+            if [[ -z "$proj_name" ]]; then
+              echo "⚠️ No <name> tag found in $project_file"
+              violations=$((violations + 1))
+              continue
+            fi
+
+            # Determine the suffix and strip it
+            if [[ "$proj_name" == *.module ]]; then
+              suffix=".module"
+              core_name="${proj_name%.module}"
+            elif [[ "$proj_name" == *.parent ]]; then
+              suffix=".parent"
+              core_name="${proj_name%.parent}"
+            else
+              suffix=""
+              core_name="$proj_name"
+            fi
+
+            if ! is_kebab_case "$core_name"; then
+              echo "❌ Project name '$proj_name' (in $project_file) is not kebab-case"
+              violations=$((violations + 1))
+            else
+              echo "✅ $proj_name is valid."
+            fi
           done
 
           if [ $violations -gt 0 ]; then
-            echo "❌ Found $violations invalid name(s). Please use kebab-case (e.g. 'order-service')."
+            echo "❌ Found $violations naming violation(s). Please rename projects to follow kebab-case (e.g., 'order-service')."
             exit 1
           else
-            echo "✅ All names follow kebab-case."
+            echo "✅ All naming conventions passed!"
           fi
