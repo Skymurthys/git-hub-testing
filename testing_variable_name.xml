@@ -19,9 +19,9 @@
         <task name="pick">
             <endingVariables>
                 <variable>API_Operation</variable>
-                <variable>Source_System</variable>
+                <variable>_ource_System</variable>
                 <variable>Error400</variable>
-                <variable>_ost</variable>
+                <variable>post</variable>
                 <variable>API_Name</variable>
             </endingVariables>
         </task>
