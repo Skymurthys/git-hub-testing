@@ -23,7 +23,7 @@ jobs:
           for file in $files; do
             name=$(grep -oPm1 "(?<=<name>)[^<]+" "$file")
             if [[ ! "$name" =~ ^[a-z0-9]+(-[a-z0-9]+)*(\.module|\.parent)?$ ]]; then
-              echo "::error file=$file,line=1::❌ ERROR: '$name' is not in kebab-case (e.g. om-notification-service.module)"
+              echo "::error file=$file,line=1::❌ ERROR: '$name' is not in kebab-case"
               status=1
             else
               echo "✅ $name is valid"
@@ -33,7 +33,7 @@ jobs:
           if [[ $status -ne 0 ]]; then
             echo ""
             echo "❌ Naming validation failed!"
-            echo "💡 Please use kebab-case (lowercase and hyphens only): e.g., om-notification-service.module"
+            echo "💡 Please use kebab-case (lowercase and hyphens only): e.g., om-notification-service"
             echo "📘 See GitHub Actions logs or PR Checks tab for details."
             exit 1
           else
