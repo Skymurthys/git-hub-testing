@@ -1,41 +1,64 @@
-name: validate-naming
+name: Validate TIBCO BW6 Naming Conventions
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
+    branches:
+      - main
 
 jobs:
-  validate:
+  validate-naming:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Validate Application/Module Naming (Kebab-case)
+      - name: Validate project names for kebab-case
+        shell: bash
         run: |
-          echo "🔍 Validating TIBCO BW6 naming conventions..."
+          echo "🔍 Starting TIBCO BW6 naming convention validation..."
 
-          # Find all .project files
-          files=$(find . -name .project)
+          violations=0
 
-          status=0
+          is_kebab_case() {
+            [[ "$1" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]
+          }
 
-          for file in $files; do
-            name=$(grep -oPm1 "(?<=<name>)[^<]+" "$file")
-            if [[ ! "$name" =~ ^[a-z0-9]+(-[a-z0-9]+)*(\.module|\.parent)?$ ]]; then
-              echo "::error file=$file,line=1::❌ ERROR: '$name' is not in kebab-case"
-              status=1
+          IFS=$'\n'
+          project_files=($(find . -type f \( -name ".project" -o -name "*.project" \)))
+          echo "🔎 Found ${#project_files[@]} .project files"
+
+          for project_file in "${project_files[@]}"; do
+            proj_name=$(grep -oPm1 '(?<=<name>)[^<]+' "$project_file" || echo "")
+
+            if [[ -z "$proj_name" ]]; then
+              echo "❌ ERROR: No <name> tag found in $project_file"
+              echo "::error file=$project_file::Missing <name> tag"
+              violations=$((violations + 1))
+              continue
+            fi
+
+            if [[ "$proj_name" == *.module ]]; then
+              core_name="${proj_name%.module}"
+            elif [[ "$proj_name" == *.parent ]]; then
+              core_name="${proj_name%.parent}"
             else
-              echo "✅ $name is valid"
+              core_name="$proj_name"
+            fi
+
+            if ! is_kebab_case "$core_name"; then
+              echo "❌ ERROR: '$proj_name' is not in kebab-case (found in $project_file)"
+              echo "::error file=$project_file::'$proj_name' is not in kebab-case"
+              violations=$((violations + 1))
+            else
+              echo "✅ Valid: $proj_name"
             fi
           done
 
-          if [[ $status -ne 0 ]]; then
-            echo ""
-            echo "❌ Naming validation failed!"
-            echo "💡 Please use kebab-case (lowercase and hyphens only): e.g., om-notification-service"
-            echo "📘 See GitHub Actions logs or PR Checks tab for details."
+          echo "----"
+          if (( violations > 0 )); then
+            echo "❌ Validation failed: $violations naming violation(s) found."
             exit 1
           else
-            echo "✅ All names follow kebab-case."
+            echo "✅ All project names follow kebab-case naming convention."
           fi
