@@ -15,53 +15,51 @@ jobs:
 
       - name: Validate Application/Module/Parent Project Names
         run: |
-          echo "🔍 Starting validation of TIBCO BW6 project names..."
-
-          violations=0
+          echo "🔍 Validating TIBCO BW6 project names..."
 
           is_kebab_case() {
             [[ "$1" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]
           }
 
-          # Find all relevant .project or *.project files
-          find . -type f \( -name ".project" -o -name "*.project" \) | while read -r project_file; do
+          violations=0
+
+          # Use a for-loop instead of while-read (subshell issue)
+          project_files=$(find . -type f \( -name ".project" -o -name "*.project" \))
+          for project_file in $project_files; do
             folder_path=$(dirname "$project_file")
             folder_name=$(basename "$folder_path")
 
             proj_name=$(grep -oPm1 '(?<=<name>)[^<]+' "$project_file" || echo "")
 
-            echo "📂 Found folder: $folder_name"
-            echo "📄 Found project name in XML: $proj_name"
+            echo "📂 Folder: $folder_name"
+            echo "📄 Project name in XML: $proj_name"
 
             if [[ -z "$proj_name" ]]; then
-              echo "⚠️ No <name> tag found in $project_file"
+              echo "⚠️ No <name> found in $project_file"
               violations=$((violations + 1))
               continue
             fi
 
-            # Determine the suffix and strip it
+            # Strip known suffixes to validate just the core part
             if [[ "$proj_name" == *.module ]]; then
-              suffix=".module"
               core_name="${proj_name%.module}"
             elif [[ "$proj_name" == *.parent ]]; then
-              suffix=".parent"
               core_name="${proj_name%.parent}"
             else
-              suffix=""
               core_name="$proj_name"
             fi
 
             if ! is_kebab_case "$core_name"; then
-              echo "❌ Project name '$proj_name' (in $project_file) is not kebab-case"
+              echo "❌ Invalid name: '$proj_name' → core '$core_name' is not kebab-case"
               violations=$((violations + 1))
             else
-              echo "✅ $proj_name is valid."
+              echo "✅ Valid: $proj_name"
             fi
           done
 
-          if [ $violations -gt 0 ]; then
-            echo "❌ Found $violations naming violation(s). Please rename projects to follow kebab-case (e.g., 'order-service')."
+          if [[ $violations -gt 0 ]]; then
+            echo "❌ Found $violations naming violation(s). Please follow kebab-case like 'order-service'."
             exit 1
           else
-            echo "✅ All naming conventions passed!"
+            echo "✅ All project names follow kebab-case."
           fi
