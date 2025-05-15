@@ -26,12 +26,14 @@ jobs:
 
           IFS=$'\n'
           project_files=($(find . -type f \( -name ".project" -o -name "*.project" \)))
-          echo "🔎 Found ${#project_files[@]} project files."
+          echo "🔎 Found ${#project_files[@]} .project files"
 
           for project_file in "${project_files[@]}"; do
             proj_name=$(grep -oPm1 '(?<=<name>)[^<]+' "$project_file" || echo "")
+
             if [[ -z "$proj_name" ]]; then
-              echo "::error file=$project_file::No <name> tag found"
+              echo "❌ ERROR: No <name> tag found in $project_file"
+              echo "::error file=$project_file::Missing <name> tag"
               violations=$((violations + 1))
               continue
             fi
@@ -45,15 +47,18 @@ jobs:
             fi
 
             if ! is_kebab_case "$core_name"; then
-              # Print error with annotation so GitHub highlights it
-              echo "::error file=$project_file::Invalid kebab-case name '$proj_name' (core '$core_name')"
+              echo "❌ ERROR: '$proj_name' is not in kebab-case (found in $project_file)"
+              echo "::error file=$project_file::'$proj_name' is not in kebab-case"
               violations=$((violations + 1))
+            else
+              echo "✅ Valid: $proj_name"
             fi
           done
 
+          echo "----"
           if (( violations > 0 )); then
-            echo "❌ Validation failed with $violations error(s). Please fix naming conventions."
+            echo "❌ Validation failed: $violations naming violation(s) found."
             exit 1
           else
-            echo "✅ All project names conform to kebab-case naming."
+            echo "✅ All project names follow kebab-case naming convention."
           fi
