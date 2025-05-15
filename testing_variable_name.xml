@@ -21,7 +21,7 @@
                 <variable>API_Operation</variable>
                 <variable>Source_System</variable>
                 <variable>Error400</variable>
-                <variable>post</variable>
+                <variable>_ost</variable>
                 <variable>API_Name</variable>
             </endingVariables>
         </task>
