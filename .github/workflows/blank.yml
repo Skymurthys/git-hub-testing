@@ -1,0 +1,41 @@
+name: validate-process-filenames
+
+on:
+  push:
+    branches:
+      - test-branch  # Run only when pushing to test branch
+
+jobs:
+  validate-bwp-names:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate .bwp filenames follow camelCase
+        run: |
+          echo "🔍 Validating .bwp filenames for camelCase compliance..."
+
+          invalid=0
+          bwp_files=$(find . -type f -name "*.bwp")
+
+          for file in $bwp_files; do
+            filename=$(basename "$file" .bwp)
+
+            # Check if filename is camelCase (no underscores or dashes, starts with lowercase)
+            if [[ ! "$filename" =~ ^[a-z]+([A-Z][a-z0-9]*)*$ ]]; then
+              echo "❌ INVALID: $filename.bwp — filename must follow camelCase (e.g., myProcessName.bwp)"
+              invalid=1
+            else
+              echo "✅ VALID: $filename.bwp"
+            fi
+          done
+
+          if [ "$invalid" -eq 1 ]; then
+            echo ""
+            echo "🚫 Push rejected: All .bwp filenames must be camelCase (e.g., orderStatusUpdate.bwp)"
+            exit 1
+          else
+            echo "✅ All .bwp filenames are valid camelCase."
+          fi
