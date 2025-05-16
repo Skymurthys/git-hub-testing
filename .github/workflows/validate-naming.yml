@@ -1,4 +1,4 @@
-name: Validate TIBCO BW6 Naming Conventions
+name: validate-naming
 
 on:
   push:
