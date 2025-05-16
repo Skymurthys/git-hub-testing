@@ -1,9 +1,9 @@
-name: Validate TIBCO BW6 Naming Conventions
+name: validate-naming
 
 on:
   push:
     branches:
-      - main
+      - test-branch
 
 jobs:
   validate-naming:
