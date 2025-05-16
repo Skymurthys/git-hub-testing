@@ -13,11 +13,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate project names for kebab-case
+      - name: Validate project names (.project files) for kebab-case
+        id: validate_projects
         shell: bash
+        continue-on-error: true
         run: |
-          echo "🔍 Starting TIBCO BW6 naming convention validation..."
-
+          echo "🔍 STEP 1: Validating project names (.project files) for kebab-case..."
           violations=0
 
           is_kebab_case() {
@@ -26,6 +27,7 @@ jobs:
 
           IFS=$'\n'
           project_files=($(find . -type f \( -name ".project" -o -name "*.project" \)))
+
           echo "🔎 Found ${#project_files[@]} .project files"
 
           for project_file in "${project_files[@]}"; do
@@ -47,18 +49,57 @@ jobs:
             fi
 
             if ! is_kebab_case "$core_name"; then
-              echo "❌ ERROR: '$proj_name' is not in kebab-case (found in $project_file)"
-              echo "::error file=$project_file::'$proj_name' is not in kebab-case"
+              echo "❌ ERROR: Invalid project name '$proj_name' (found in $project_file)"
+              echo "::error file=$project_file::Invalid project name '$proj_name'. Expected kebab-case"
               violations=$((violations + 1))
-            else
-              echo "✅ Valid: $proj_name"
             fi
           done
 
           echo "----"
+          echo "violations=$violations" >> $GITHUB_OUTPUT
+
           if (( violations > 0 )); then
-            echo "❌ Validation failed: $violations naming violation(s) found."
+            echo "🚫 Validation failed: $violations project naming violation(s) found."
             exit 1
           else
-            echo "✅ All project names follow kebab-case naming convention."
+            echo "✅ All project names follow kebab-case."
           fi
+
+      - name: Validate process filenames (.bwp files) for camelCase
+        id: validate_processes
+        shell: bash
+        continue-on-error: true
+        run: |
+          echo "🔍 STEP 2: Validating process filenames (.bwp) for camelCase..."
+
+          camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
+
+          mapfile -t bwp_files < <(find . -type f -name "*.bwp")
+          echo "🔎 Found ${#bwp_files[@]} .bwp files"
+
+          violations=0
+          for file in "${bwp_files[@]}"; do
+            filename=$(basename "$file")
+            name_without_ext="${filename%.bwp}"
+
+            if [[ ! "$name_without_ext" =~ $camel_case_regex ]]; then
+              echo "❌ ERROR: Invalid process name '$filename' (found in $file)"
+              violations=$((violations + 1))
+            fi
+          done
+
+          echo "----"
+          echo "violations=$violations" >> $GITHUB_OUTPUT
+
+          if (( violations > 0 )); then
+            echo "🚫 Validation failed: $violations invalid process name(s) found."
+            exit 1
+          else
+            echo "✅ All process (.bwp) filenames follow camelCase."
+          fi
+
+      - name: Fail job if any violations found
+        if: steps.validate_projects.outputs.violations != '0' || steps.validate_processes.outputs.violations != '0'
+        run: |
+          echo "❌ Validation errors detected. Failing the job."
+          exit 1
