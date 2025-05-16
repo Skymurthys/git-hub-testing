@@ -71,24 +71,28 @@ jobs:
         continue-on-error: true
         run: |
           echo "🔍 STEP 2: Validating process filenames (.bwp) for camelCase..."
-          violations=0
+
           camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
 
-          while IFS= read -r file; do
-            filename=$(basename "$file" .bwp)
-            echo "Checking file: $file => Process name: $filename"
+          mapfile -t bwp_files < <(find . -type f -name "*.bwp")
+          echo "🔎 Found ${#bwp_files[@]} .bwp files"
 
-            if [[ ! "$filename" =~ $camel_case_regex ]]; then
-              echo "❌ ERROR: Invalid process filename '$file' — '$filename.bwp' must follow camelCase"
+          violations=0
+          for file in "${bwp_files[@]}"; do
+            filename=$(basename "$file")
+            name_without_ext="${filename%.bwp}"
+
+            if [[ ! "$name_without_ext" =~ $camel_case_regex ]]; then
+              echo "❌ ERROR: Invalid process name '$filename' (found in $file)"
               violations=$((violations + 1))
             fi
-          done < <(find . -type f -name "*.bwp")
+          done
 
           echo "----"
           echo "violations=$violations" >> $GITHUB_OUTPUT
 
           if (( violations > 0 )); then
-            echo "🚫 Validation failed: $violations invalid .bwp filename(s) found."
+            echo "🚫 Validation failed: $violations invalid process name(s) found."
             exit 1
           else
             echo "✅ All process (.bwp) filenames follow camelCase."
@@ -97,5 +101,5 @@ jobs:
       - name: Fail job if any violations found
         if: steps.validate_projects.outputs.violations != '0' || steps.validate_processes.outputs.violations != '0'
         run: |
-          echo "❌ Validation errors found. Failing the job."
+          echo "❌ Validation errors detected. Failing the job."
           exit 1
