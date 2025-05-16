@@ -56,13 +56,13 @@ jobs:
           done
 
           echo "----"
+          echo "violations=$violations" >> $GITHUB_OUTPUT
+
           if (( violations > 0 )); then
             echo "🚫 Validation failed: $violations project naming violation(s) found."
-            echo "::set-output name=violations::$violations"
             exit 1
           else
             echo "✅ All project names follow kebab-case."
-            echo "::set-output name=violations::0"
           fi
 
       - name: Validate process filenames (.bwp files) for camelCase
@@ -85,13 +85,13 @@ jobs:
           done < <(find . -type f -name "*.bwp")
 
           echo "----"
+          echo "violations=$violations" >> $GITHUB_OUTPUT
+
           if (( violations > 0 )); then
             echo "🚫 Validation failed: $violations invalid .bwp filename(s) found."
-            echo "::set-output name=violations::$violations"
             exit 1
           else
             echo "✅ All process (.bwp) filenames follow camelCase."
-            echo "::set-output name=violations::0"
           fi
 
       - name: Fail job if any violations found
