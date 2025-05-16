@@ -13,10 +13,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate project names for kebab-case
+      - name: Validate project names (.project files) for kebab-case
         shell: bash
         run: |
-          echo "🔍 Starting TIBCO BW6 naming convention validation..."
+          echo "🔍 STEP 1: Validating project names (.project files) for kebab-case..."
 
           violations=0
 
@@ -26,6 +26,7 @@ jobs:
 
           IFS=$'\n'
           project_files=($(find . -type f \( -name ".project" -o -name "*.project" \)))
+
           echo "🔎 Found ${#project_files[@]} .project files"
 
           for project_file in "${project_files[@]}"; do
@@ -38,6 +39,7 @@ jobs:
               continue
             fi
 
+            # Strip known suffixes
             if [[ "$proj_name" == *.module ]]; then
               core_name="${proj_name%.module}"
             elif [[ "$proj_name" == *.parent ]]; then
@@ -47,18 +49,43 @@ jobs:
             fi
 
             if ! is_kebab_case "$core_name"; then
-              echo "❌ ERROR: '$proj_name' is not in kebab-case (found in $project_file)"
-              echo "::error file=$project_file::'$proj_name' is not in kebab-case"
+              echo "❌ ERROR: Invalid project name '$proj_name' (found in $project_file)"
+              echo "::error file=$project_file::Invalid project name '$proj_name'. Expected kebab-case (e.g., 'order-service', 'user-auth.module')"
               violations=$((violations + 1))
-            else
-              echo "✅ Valid: $proj_name"
             fi
           done
 
           echo "----"
           if (( violations > 0 )); then
-            echo "❌ Validation failed: $violations naming violation(s) found."
+            echo "🚫 Push rejected: $violations project naming violation(s) found."
             exit 1
           else
             echo "✅ All project names follow kebab-case naming convention."
+          fi
+
+      - name: Validate process filenames (.bwp files) for camelCase
+        shell: bash
+        run: |
+          echo "🔍 STEP 2: Validating process filenames (.bwp) for camelCase..."
+
+          violations=0
+
+          while IFS= read -r file; do
+            filename=$(basename "$file" .bwp)
+
+            # camelCase pattern: start lowercase, optional uppercase words after
+            if [[ ! "$filename" =~ ^[a-z]+([A-Z][a-z0-9]*)*$ ]]; then
+              echo "❌ ERROR: Invalid process filename '$file' - '$filename.bwp' must follow camelCase"
+              violations=$((violations + 1))
+            fi
+          done < <(find . -type f -name "*.bwp")
+
+          echo "----"
+          if (( violations > 0 )); then
+            echo "🚫 Push rejected: $violations invalid .bwp filename(s) found."
+            echo "📝 Use camelCase naming (e.g., 'orderStatusUpdate.bwp')"
+            echo "📛 No underscores (_), dashes (-), or uppercase first letter."
+            exit 1
+          else
+            echo "✅ All process (.bwp) filenames follow camelCase!"
           fi
