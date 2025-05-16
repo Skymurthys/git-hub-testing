@@ -3,63 +3,63 @@
   <packaging:description></packaging:description>
   <packaging:properties>
     <packaging:property>
-      <packaging:name>//test-1.module//BW.DEPLOYMENTUNIT.TYPE</packaging:name>
+      <packaging:name>//test1.module//BW.DEPLOYMENTUNIT.TYPE</packaging:name>
       <packaging:type>xsd:string</packaging:type>
       <packaging:visibility>private</packaging:visibility>
       <packaging:scalable>true</packaging:scalable>
       <packaging:overrideValue>false</packaging:overrideValue>
     </packaging:property>
     <packaging:property>
-      <packaging:name>//test-1.module//BW.APPNODE.NAME</packaging:name>
+      <packaging:name>//test1.module//BW.APPNODE.NAME</packaging:name>
       <packaging:type>xsd:string</packaging:type>
       <packaging:visibility>private</packaging:visibility>
       <packaging:scalable>true</packaging:scalable>
       <packaging:overrideValue>false</packaging:overrideValue>
     </packaging:property>
     <packaging:property>
-      <packaging:name>//test-1.module//BW.DEPLOYMENTUNIT.NAME</packaging:name>
+      <packaging:name>//test1.module//BW.DEPLOYMENTUNIT.NAME</packaging:name>
       <packaging:type>xsd:string</packaging:type>
       <packaging:visibility>private</packaging:visibility>
       <packaging:scalable>true</packaging:scalable>
       <packaging:overrideValue>false</packaging:overrideValue>
     </packaging:property>
     <packaging:property>
-      <packaging:name>//test-1.module//BW.HOST.NAME</packaging:name>
+      <packaging:name>//test1.module//BW.HOST.NAME</packaging:name>
       <packaging:type>xsd:string</packaging:type>
       <packaging:visibility>private</packaging:visibility>
       <packaging:scalable>true</packaging:scalable>
       <packaging:overrideValue>false</packaging:overrideValue>
     </packaging:property>
     <packaging:property>
-      <packaging:name>//test-1.module//BW.DOMAIN.NAME</packaging:name>
+      <packaging:name>//test1.module//BW.DOMAIN.NAME</packaging:name>
       <packaging:type>xsd:string</packaging:type>
       <packaging:visibility>private</packaging:visibility>
       <packaging:scalable>true</packaging:scalable>
       <packaging:overrideValue>false</packaging:overrideValue>
     </packaging:property>
     <packaging:property>
-      <packaging:name>//test-1.module//BW.DEPLOYMENTUNIT.VERSION</packaging:name>
+      <packaging:name>//test1.module//BW.DEPLOYMENTUNIT.VERSION</packaging:name>
       <packaging:type>xsd:string</packaging:type>
       <packaging:visibility>private</packaging:visibility>
       <packaging:scalable>true</packaging:scalable>
       <packaging:overrideValue>false</packaging:overrideValue>
     </packaging:property>
     <packaging:property>
-      <packaging:name>//test-1.module//BW.APPSPACE.NAME</packaging:name>
+      <packaging:name>//test1.module//BW.APPSPACE.NAME</packaging:name>
       <packaging:type>xsd:string</packaging:type>
       <packaging:visibility>private</packaging:visibility>
       <packaging:scalable>true</packaging:scalable>
       <packaging:overrideValue>false</packaging:overrideValue>
     </packaging:property>
     <packaging:property>
-      <packaging:name>//test-1.module//BW.MODULE.VERSION</packaging:name>
+      <packaging:name>//test1.module//BW.MODULE.VERSION</packaging:name>
       <packaging:type>xsd:string</packaging:type>
       <packaging:visibility>private</packaging:visibility>
       <packaging:scalable>true</packaging:scalable>
       <packaging:overrideValue>false</packaging:overrideValue>
     </packaging:property>
     <packaging:property>
-      <packaging:name>//test-1.module//BW.MODULE.NAME</packaging:name>
+      <packaging:name>//test1.module//BW.MODULE.NAME</packaging:name>
       <packaging:type>xsd:string</packaging:type>
       <packaging:visibility>private</packaging:visibility>
       <packaging:scalable>true</packaging:scalable>
@@ -68,7 +68,7 @@
   </packaging:properties>
   <packaging:modules>
     <packaging:module>
-      <packaging:symbolicName>test-1.module</packaging:symbolicName>
+      <packaging:symbolicName>test1.module</packaging:symbolicName>
       <packaging:technologyType>osgi-bundle,bw-appmodule</packaging:technologyType>
       <packaging:technologyVersion>1.0.0.qualifier</packaging:technologyVersion>
     </packaging:module>
