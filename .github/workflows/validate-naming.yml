@@ -83,42 +83,42 @@ jobs:
 
           echo "process_violations=$violations" >> "$GITHUB_OUTPUT"
 
-     - name: Validate presence of .substvar files in META-INF folders for specific environments
-       id: validate_substvar
-       shell: bash
-       continue-on-error: true
-       run: |
-         echo "🔍 STEP 3: Checking for .substvar files in META-INF folders..."
+      - name: Validate presence of .substvar files in META-INF folders for specific environments
+        id: validate_substvar
+        shell: bash
+        continue-on-error: true
+        run: |
+          echo "🔍 STEP 3: Checking for .substvar files in META-INF folders for environments DEV4, IT, UAT, ST, PT, AM..."
 
-        violations=0
-        envs="DEV4 IT UAT ST PT AM"
+          violations=0
+          envs="DEV4 IT UAT ST PT AM"
 
-        # Find all application directories containing META-INF
-        app_dirs=$(find . -type d -name META-INF | while read -r meta_dir; do
-          dirname "$meta_dir"
-        done)
-
-        # Normalize app paths to lowercase and remove duplicates
-        app_dirs=$(echo "$app_dirs" | awk '{print tolower($0)}' | sort -u)
-
-        echo "🔎 Application to validate: $app_dirs"
-
-        for app_dir in $app_dirs; do
-          meta_inf="$app_dir/META-INF"
-          for env in $envs; do
-            substvar_file="$meta_inf/$env.substvar"
-            if [[ -f "$substvar_file" ]]; then
-              echo "✅ Found $env.substvar in $meta_inf"
-            else
-              echo "⚠️ Environment .substvar not found: $substvar_file"
-              echo "::warning file=$substvar_file::Missing $env.substvar"
-              violations=$((violations + 1))
+          # Find valid app directories with META-INF (exclude hidden/.module/.parent)
+          app_dirs=$(find . -type d -name META-INF | while read -r meta_dir; do
+            app_dir=$(dirname "$meta_dir")
+            base_name=$(basename "$app_dir")
+            if [[ "$base_name" != .* && "$base_name" != *.module && "$base_name" != *.parent ]]; then
+              echo "$app_dir"
             fi
+          done)
+
+          echo "🔎 Application to validate: $app_dirs"
+
+          for app_dir in $app_dirs; do
+            meta_inf_path="$app_dir/META-INF"
+            for env in $envs; do
+              substvar_file="$meta_inf_path/$env.substvar"
+              if [ -f "$substvar_file" ]; then
+                echo "✅ Found $env.substvar in $meta_inf_path"
+              else
+                echo "⚠️ Environment .substvar not found: $substvar_file"
+                echo "::warning file=$substvar_file::Missing $env.substvar"
+                violations=$((violations + 1))
+              fi
+            done
           done
-        done
 
-        echo "substvar_violations=$violations" >> "$GITHUB_OUTPUT"
-
+          echo "substvar_violations=$violations" >> "$GITHUB_OUTPUT"
 
       - name: Fail job if any violations found
         if: |
