@@ -62,25 +62,24 @@ jobs:
             echo "✅ All project names follow kebab-case."
           fi
 
-      - name: STEP 2: Validate process filenames (.bwp) for camelCase
+      - name: STEP 2: Validate process filenames (.bwp files) for camelCase
         id: validate_processes
         shell: bash
         continue-on-error: true
         run: |
           echo "🔍 STEP 2: Validating process filenames (.bwp) for camelCase..."
-
           camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
-          process_violations=0
 
           mapfile -t bwp_files < <(find . -type f -name "*.bwp")
           echo "🔎 Found ${#bwp_files[@]} .bwp files"
 
+          process_violations=0
           for file in "${bwp_files[@]}"; do
             filename=$(basename "$file")
             name_without_ext="${filename%.bwp}"
+
             if [[ ! "$name_without_ext" =~ $camel_case_regex ]]; then
               echo "❌ ERROR: Invalid process name '$filename' (found in $file)"
-              echo "::error file=$file::Invalid process name '$filename'. Expected camelCase"
               process_violations=$((process_violations + 1))
             fi
           done
@@ -88,7 +87,7 @@ jobs:
           echo "process_violations=$process_violations" >> $GITHUB_OUTPUT
           echo "----"
           if (( process_violations > 0 )); then
-            echo "🚫 Process name validation failed: $process_violations violations found."
+            echo "🚫 Process naming validation failed: $process_violations violations found."
             exit 1
           else
             echo "✅ All process (.bwp) filenames follow camelCase."
@@ -115,6 +114,13 @@ jobs:
           done
 
           echo "hardcoded_violations=$hardcoded_violations" >> $GITHUB_OUTPUT
+          echo "----"
+          if (( hardcoded_violations > 0 )); then
+            echo "🚫 Hardcoded value validation failed: $hardcoded_violations violations found."
+            exit 1
+          else
+            echo "✅ No hardcoded values found in .bwp files."
+          fi
 
       - name: Fail job if any violations found
         if: steps.validate_projects.outputs.project_violations != '0' || steps.validate_processes.outputs.process_violations != '0' || steps.validate_hardcoded.outputs.hardcoded_violations != '0'
