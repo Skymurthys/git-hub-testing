@@ -83,7 +83,7 @@ jobs:
 
           echo "process_violations=$violations" >> "$GITHUB_OUTPUT"
 
-      - name: STEP 3: Validate no hardcoded values in .bwp files
+      - name: Validate no hardcoded values in .bwp files
         id: validate_hardcoded
         shell: bash
         continue-on-error: true
