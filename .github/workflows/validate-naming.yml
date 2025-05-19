@@ -93,38 +93,35 @@ jobs:
           violations=0
           envs="DEV4 IT UAT ST PT AM"
 
-          # Step 1: Find all META-INF folders
+          # Step 1: Find all "META-INF" directories
           mapfile -t meta_dirs < <(find . -type d -name META-INF)
 
-          # Step 2: Filter parent dirs of META-INF that are NOT .module, .parent, etc.
+          # Step 2: Filter valid application directories (exclude paths like *.module)
           declare -A seen
           app_dirs=()
           for meta in "${meta_dirs[@]}"; do
-            parent=$(dirname "$meta")
-            base=$(basename "$parent")
-            ext="${base##*.}"
-
-            # Only consider parent dirs with no extension (e.g., ignore Test.module)
-            if [[ "$base" != *.* ]]; then
-              key=$(echo "$base" | tr '[:upper:]' '[:lower:]')
-              if [[ -z "${seen[$key]}" ]]; then
-                seen[$key]=1
-                app_dirs+=("$parent")
-              fi
+            parent_dir=$(dirname "$meta")
+            base=$(basename "$parent_dir" | tr '[:upper:]' '[:lower:]')
+            # Skip if path includes '.module' or already seen
+            if [[ "$parent_dir" == *".module"* ]]; then
+              continue
+            fi
+            if [[ -z "${seen[$base]}" ]]; then
+              seen[$base]=1
+              app_dirs+=("$parent_dir")
             fi
           done
 
           echo "🔎 Application to validate:"
           for app in "${app_dirs[@]}"; do echo "$app"; done
 
-          # Step 3: Check .substvar files
+          # Step 3: Check for each expected .substvar file
           for app_dir in "${app_dirs[@]}"; do
             meta_inf="$app_dir/META-INF"
             echo "📦 Validating application: $app_dir"
             for env in $envs; do
-              # Case-insensitive check
-              found_file=$(find "$meta_inf" -type f -iname "$env.substvar")
-              if [[ -n "$found_file" ]]; then
+              # Robust check: case-insensitive, stop at first match
+              if find "$meta_inf" -type f -iname "$env.substvar" -print -quit | grep -q .; then
                 echo "✅ Found $env.substvar in $meta_inf"
               else
                 echo "⚠️ Environment .substvar not found: $meta_inf/$env.substvar"
