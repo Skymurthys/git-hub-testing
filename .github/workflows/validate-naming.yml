@@ -93,17 +93,24 @@ jobs:
           violations=0
           envs="DEV4 IT UAT ST PT AM"
 
-          # Step 1: Find only valid "META-INF" directories
+          # Step 1: Find all META-INF directories
           mapfile -t meta_dirs < <(find . -type d -name META-INF)
 
-          # Step 2: Filter only valid app base paths that are direct parents of META-INF
+          # Step 2: Filter only clean application folders (no dots in folder name)
           declare -A seen
           app_dirs=()
           for meta in "${meta_dirs[@]}"; do
             parent=$(dirname "$meta")
-            base=$(basename "$parent" | tr '[:upper:]' '[:lower:]')
-            if [[ -z "${seen[$base]}" ]]; then
-              seen[$base]=1
+            base=$(basename "$parent")
+            base_lc=$(echo "$base" | tr '[:upper:]' '[:lower:]')
+
+            # Skip folders with a dot (e.g., Test.module)
+            if [[ "$base" == *.* ]]; then
+              continue
+            fi
+
+            if [[ -z "${seen[$base_lc]}" ]]; then
+              seen[$base_lc]=1
               app_dirs+=("$parent")
             fi
           done
