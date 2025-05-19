@@ -94,9 +94,10 @@ jobs:
           bwp_files=$(find . -type f -name "*.bwp")
 
           for file in $bwp_files; do
-            if grep -qE 'select\s*=\s*("|\&quot;)[^"$<>{}]+("|\&quot;)' "$file"; then
-              echo "❌ ERROR: Hardcoded value found in $file"
-              grep -oEn 'select\s*=\s*("|\&quot;)[^"$<>{}]+("|\&quot;)' "$file" | while read -r line; do
+            matches=$(grep -oEn 'select\s*=\s*("|\&quot;)([^\$<>{}]+)\1' "$file" || true)
+            if [[ -n "$matches" ]]; then
+              echo "❌ ERROR: Hardcoded value(s) found in $file"
+              echo "$matches" | while read -r line; do
                 echo "::error file=$file::Hardcoded select attribute -> $line"
               done
               violations=$((violations + 1))
