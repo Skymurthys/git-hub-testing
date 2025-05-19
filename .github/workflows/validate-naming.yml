@@ -111,7 +111,7 @@ jobs:
         shell: bash
         continue-on-error: true
         run: |
-          echo "🔍 STEP 4: Checking for .substvar files in META-INF folders."
+          echo "🔍 STEP 4: Checking for .substvar files in META-INF folders..."
 
           violations=0
           envs="DEV4 IT UAT ST PT AM"
@@ -126,11 +126,9 @@ jobs:
             fi
           done)
 
-          echo "🔎 Applications to validate:"
-          echo "$app_dirs"
+          echo "🔎 Applications to validate: $app_dirs"
 
           for app_dir in $app_dirs; do
-            echo "📦 Validating application: $app_dir"
             for env in $envs; do
               env_dir="$app_dir/$env"
               if [ -d "$env_dir" ]; then
