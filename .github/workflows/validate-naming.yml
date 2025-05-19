@@ -106,24 +106,22 @@ jobs:
 
           echo "hardcoded_violations=$violations" >> "$GITHUB_OUTPUT"
 
-      - name: Validate .substvar files presence in META-INF application folders and environments
+      - name: Validate presence of .substvar files in META-INF folders for specific environments
         id: validate_substvar
         shell: bash
         continue-on-error: true
         run: |
-          echo "🔍 STEP 4: Validating .substvar files presence in META-INF application folders and environments..."
+          echo "🔍 STEP 4: Checking for .substvar files in META-INF folders under environments DEV4,IT,UAT,ST,PT,AM..."
 
           violations=0
           envs="DEV4 IT UAT ST PT AM"
 
+          # Find all META-INF dirs inside applications
           meta_inf_dirs=$(find . -type d -path "*/META-INF")
 
           for meta_inf_dir in $meta_inf_dirs; do
             app_dir=$(dirname "$meta_inf_dir")
-
-            if [[ "$app_dir" != *".module"* ]]; then
-              echo "Checking application: $app_dir"
-            fi
+            echo "Checking application: $app_dir"
 
             for env in $envs; do
               env_dir="$app_dir/$env"
@@ -136,6 +134,8 @@ jobs:
                 else
                   echo "✅ Found .substvar files in $env_dir"
                 fi
+              else
+                echo "⚠️ Environment directory not found: $env_dir"
               fi
             done
           done
