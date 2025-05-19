@@ -116,22 +116,22 @@ jobs:
           for app in "${app_dirs[@]}"; do echo "$app"; done
 
           # Step 3: Check for each expected .substvar file
-         for app_dir in "${app_dirs[@]}"; do
-          meta_inf="$app_dir/META-INF"
-          echo "📦 Validating application: $app_dir"
-          echo "🔎 Listing files in $meta_inf:"
-          ls -l "$meta_inf" || echo "⚠️ Could not list files in $meta_inf"
+          for app_dir in "${app_dirs[@]}"; do
+            meta_inf="$app_dir/META-INF"
+            echo "📦 Validating application: $app_dir"
+            echo "🔎 Listing files in $meta_inf:"
+            ls -l "$meta_inf" || echo "⚠️ Could not list files in $meta_inf"
 
-          for env in $envs; do
-            if find "$meta_inf" -type f -iname "$env.substvar" -print -quit | grep -q .; then
-              echo "✅ Found $env.substvar in $meta_inf"
-            else
-              echo "⚠️ Environment .substvar not found: $meta_inf/$env.substvar"
-              echo "::warning file=$meta_inf/$env.substvar::Missing $env.substvar"
-              violations=$((violations + 1))
-            fi
+            for env in $envs; do
+              if find "$meta_inf" -type f -iname "$env.substvar" -print -quit | grep -q .; then
+                echo "✅ Found $env.substvar in $meta_inf"
+              else
+                echo "⚠️ Environment .substvar not found: $meta_inf/$env.substvar"
+                echo "::warning file=$meta_inf/$env.substvar::Missing $env.substvar"
+                violations=$((violations + 1))
+              fi
+            done
           done
-        done
 
           echo "substvar_violations=$violations" >> "$GITHUB_OUTPUT"
 
