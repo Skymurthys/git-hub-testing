@@ -13,13 +13,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate project names (.project files) for kebab-case
+      - name: STEP 1: Validate project names (.project files) for kebab-case
         id: validate_projects
         shell: bash
         continue-on-error: true
         run: |
           echo "🔍 STEP 1: Validating project names (.project files) for kebab-case..."
-          violations=0
+          project_violations=0
 
           is_kebab_case() {
             [[ "$1" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]
@@ -27,16 +27,14 @@ jobs:
 
           IFS=$'\n'
           project_files=($(find . -type f \( -name ".project" -o -name "*.project" \)))
-
           echo "🔎 Found ${#project_files[@]} .project files"
 
           for project_file in "${project_files[@]}"; do
             proj_name=$(grep -oPm1 '(?<=<name>)[^<]+' "$project_file" || echo "")
-
             if [[ -z "$proj_name" ]]; then
               echo "❌ ERROR: No <name> tag found in $project_file"
               echo "::error file=$project_file::Missing <name> tag"
-              violations=$((violations + 1))
+              project_violations=$((project_violations + 1))
               continue
             fi
 
@@ -51,21 +49,20 @@ jobs:
             if ! is_kebab_case "$core_name"; then
               echo "❌ ERROR: Invalid project name '$proj_name' (found in $project_file)"
               echo "::error file=$project_file::Invalid project name '$proj_name'. Expected kebab-case"
-              violations=$((violations + 1))
+              project_violations=$((project_violations + 1))
             fi
           done
 
+          echo "project_violations=$project_violations" >> $GITHUB_OUTPUT
           echo "----"
-          echo "violations=$violations" >> $GITHUB_OUTPUT
-
-          if (( violations > 0 )); then
-            echo "🚫 Validation failed: $violations project naming violation(s) found."
+          if (( project_violations > 0 )); then
+            echo "🚫 Project naming validation failed: $project_violations violations found."
             exit 1
           else
             echo "✅ All project names follow kebab-case."
           fi
 
-      - name: Validate process filenames (.bwp files) for camelCase
+      - name: STEP 2: Validate process filenames (.bwp) for camelCase
         id: validate_processes
         shell: bash
         continue-on-error: true
@@ -73,39 +70,38 @@ jobs:
           echo "🔍 STEP 2: Validating process filenames (.bwp) for camelCase..."
 
           camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
+          process_violations=0
 
           mapfile -t bwp_files < <(find . -type f -name "*.bwp")
           echo "🔎 Found ${#bwp_files[@]} .bwp files"
 
-          violations=0
           for file in "${bwp_files[@]}"; do
             filename=$(basename "$file")
             name_without_ext="${filename%.bwp}"
-
             if [[ ! "$name_without_ext" =~ $camel_case_regex ]]; then
               echo "❌ ERROR: Invalid process name '$filename' (found in $file)"
-              violations=$((violations + 1))
+              echo "::error file=$file::Invalid process name '$filename'. Expected camelCase"
+              process_violations=$((process_violations + 1))
             fi
           done
 
+          echo "process_violations=$process_violations" >> $GITHUB_OUTPUT
           echo "----"
-          echo "violations=$violations" >> $GITHUB_OUTPUT
-
-          if (( violations > 0 )); then
-            echo "🚫 Validation failed: $violations invalid process name(s) found."
+          if (( process_violations > 0 )); then
+            echo "🚫 Process name validation failed: $process_violations violations found."
             exit 1
           else
             echo "✅ All process (.bwp) filenames follow camelCase."
           fi
 
-     - name: STEP 3: Validate no hardcoded values in .bwp files
+      - name: STEP 3: Validate no hardcoded values in .bwp files
         id: validate_hardcoded
         shell: bash
         continue-on-error: true
         run: |
           echo "🔍 STEP 3: Scanning for hardcoded values in .bwp files..."
 
-          violations=0
+          hardcoded_violations=0
           bwp_files=$(find . -type f -name "*.bwp")
 
           for file in $bwp_files; do
@@ -114,11 +110,12 @@ jobs:
               grep -oEn 'select\s*=\s*(&quot;|")([\'"])[^$<>&]+(\2)(&quot;|")' "$file" | while read -r line; do
                 echo "::error file=$file::Hardcoded select attribute -> $line"
               done
-              violations=$((violations+1))
+              hardcoded_violations=$((hardcoded_violations + 1))
             fi
           done
 
-          echo "hardcoded_violations=$violations" >> $GITHUB_OUTPUT
+          echo "hardcoded_violations=$hardcoded_violations" >> $GITHUB_OUTPUT
+
       - name: Fail job if any violations found
         if: steps.validate_projects.outputs.project_violations != '0' || steps.validate_processes.outputs.process_violations != '0' || steps.validate_hardcoded.outputs.hardcoded_violations != '0'
         run: |
