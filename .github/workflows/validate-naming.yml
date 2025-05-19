@@ -106,12 +106,56 @@ jobs:
 
           echo "hardcoded_violations=$violations" >> "$GITHUB_OUTPUT"
 
+      - name: Validate .substvar files in META-INF env folders
+        id: validate_substvar
+        shell: bash
+        continue-on-error: true
+        run: |
+          echo "🔍 STEP 4: Checking .substvar files in META-INF env folders..."
+
+          base_dir="."
+          envs=("DEV4" "IT" "UAT" "ST" "PT" "AM")
+          violations=0
+
+          app_meta_inf_dirs=$(find "$base_dir" -type d -path "*/META-INF")
+
+          if [[ -z "$app_meta_inf_dirs" ]]; then
+            echo "::error ::No META-INF folders found under $base_dir"
+            violations=$((violations + 1))
+          else
+            for meta_inf_dir in $app_meta_inf_dirs; do
+              app_dir=$(dirname "$meta_inf_dir")
+              echo "Checking application: $app_dir"
+
+              for env in "${envs[@]}"; do
+                env_folder="$meta_inf_dir/$env"
+                echo "  Checking env folder: $env_folder"
+
+                if [[ ! -d "$env_folder" ]]; then
+                  echo "::error ::Missing env folder: $env_folder"
+                  violations=$((violations + 1))
+                  continue
+                fi
+
+                substvar_files=($(find "$env_folder" -maxdepth 1 -type f -name "*.substvar"))
+                if [[ ${#substvar_files[@]} -eq 0 ]]; then
+                  echo "::error ::No .substvar files found in $env_folder"
+                  violations=$((violations + 1))
+                else
+                  echo "  ✅ Found ${#substvar_files[@]} .substvar file(s) in $env_folder"
+                fi
+              done
+            done
+          fi
+
+          echo "substvar_violations=$violations" >> "$GITHUB_OUTPUT"
 
       - name: Fail job if any violations found
         if: |
           steps.validate_projects.outputs.project_violations != '0' || 
           steps.validate_processes.outputs.process_violations != '0' || 
-          steps.validate_hardcoded.outputs.hardcoded_violations != '0'
+          steps.validate_hardcoded.outputs.hardcoded_violations != '0' ||
+          steps.validate_substvar.outputs.substvar_violations != '0'
         run: |
           echo "❌ Validation errors detected. Failing the job."
           exit 1
