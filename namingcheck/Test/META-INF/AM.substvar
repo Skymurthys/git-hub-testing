@@ -84,13 +84,12 @@
 		</globalVariable>
 		<globalVariable>
 			<name>//Test.module//newProperty</name>
-			<value>ukjh</value>
+			<value>kjh</value>
 			<deploymentSettable>false</deploymentSettable>
 			<serviceSettable>false</serviceSettable>
 			<type>String</type>
 			<isOverride>true</isOverride>
 			<useLookupValue>false</useLookupValue>
-			<lookupValue>ukjh</lookupValue>
 		</globalVariable>
 	</globalVariables>
 </repository>
