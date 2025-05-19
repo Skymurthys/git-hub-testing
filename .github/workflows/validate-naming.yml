@@ -116,17 +116,20 @@ jobs:
           violations=0
           envs="DEV4 IT UAT ST PT AM"
 
-          # List all top-level folders excluding hidden and *.module/*.parent
+          # Find valid app folders
           app_dirs=$(find . -mindepth 1 -maxdepth 1 -type d \
                       ! -name ".*" \
                       ! -name "*.module" \
                       ! -name "*.parent")
 
+          echo "🔎 Found application folders:"
+          echo "$app_dirs"
+
           for app_dir in $app_dirs; do
             meta_inf_path="$app_dir/META-INF"
-
+            echo "🔎 Checking if $meta_inf_path exists..."
             if [ -d "$meta_inf_path" ]; then
-              echo "📦 Checking application: $app_dir"
+              echo "📦 Found META-INF in: $app_dir"
               for env in $envs; do
                 env_dir="$app_dir/$env"
                 if [ -d "$env_dir" ]; then
@@ -142,6 +145,8 @@ jobs:
                   echo "⚠️ Environment directory not found: $env_dir"
                 fi
               done
+            else
+              echo "⏭️ Skipping $app_dir (no META-INF folder)"
             fi
           done
 
