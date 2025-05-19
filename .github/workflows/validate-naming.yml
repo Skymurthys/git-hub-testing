@@ -93,42 +93,42 @@ jobs:
           violations=0
           envs="DEV4 IT UAT ST PT AM"
 
-          # Step 1: Find all META-INF directories
+          # Step 1: Find all META-INF folders
           mapfile -t meta_dirs < <(find . -type d -name META-INF)
 
-          # Step 2: Filter only clean application folders (no dots in folder name)
+          # Step 2: Filter parent dirs of META-INF that are NOT .module, .parent, etc.
           declare -A seen
           app_dirs=()
           for meta in "${meta_dirs[@]}"; do
             parent=$(dirname "$meta")
             base=$(basename "$parent")
-            base_lc=$(echo "$base" | tr '[:upper:]' '[:lower:]')
+            ext="${base##*.}"
 
-            # Skip folders with a dot (e.g., Test.module)
-            if [[ "$base" == *.* ]]; then
-              continue
-            fi
-
-            if [[ -z "${seen[$base_lc]}" ]]; then
-              seen[$base_lc]=1
-              app_dirs+=("$parent")
+            # Only consider parent dirs with no extension (e.g., ignore Test.module)
+            if [[ "$base" != *.* ]]; then
+              key=$(echo "$base" | tr '[:upper:]' '[:lower:]')
+              if [[ -z "${seen[$key]}" ]]; then
+                seen[$key]=1
+                app_dirs+=("$parent")
+              fi
             fi
           done
 
           echo "🔎 Application to validate:"
           for app in "${app_dirs[@]}"; do echo "$app"; done
 
-          # Step 3: Check for .substvar in each env under META-INF
+          # Step 3: Check .substvar files
           for app_dir in "${app_dirs[@]}"; do
             meta_inf="$app_dir/META-INF"
             echo "📦 Validating application: $app_dir"
             for env in $envs; do
-              substvar_file="$meta_inf/$env.substvar"
-              if [[ -f "$substvar_file" ]]; then
+              # Case-insensitive check
+              found_file=$(find "$meta_inf" -type f -iname "$env.substvar")
+              if [[ -n "$found_file" ]]; then
                 echo "✅ Found $env.substvar in $meta_inf"
               else
-                echo "⚠️ Environment .substvar not found: $substvar_file"
-                echo "::warning file=$substvar_file::Missing $env.substvar"
+                echo "⚠️ Environment .substvar not found: $meta_inf/$env.substvar"
+                echo "::warning file=$meta_inf/$env.substvar::Missing $env.substvar"
                 violations=$((violations + 1))
               fi
             done
