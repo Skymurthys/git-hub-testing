@@ -116,38 +116,36 @@ jobs:
           violations=0
           envs="DEV4 IT UAT ST PT AM"
 
-          # Find valid app folders
-          app_dirs=$(find . -mindepth 1 -maxdepth 1 -type d \
-                      ! -name ".*" \
-                      ! -name "*.module" \
-                      ! -name "*.parent")
+          # Find directories that contain META-INF and are not .module/.parent/hidden
+          app_dirs=$(find . -type d -name META-INF | while read -r meta_dir; do
+            app_dir=$(dirname "$meta_dir")
+            base_name=$(basename "$app_dir")
 
-          echo "🔎 Found application folders:"
+            if [[ "$base_name" != .* && "$base_name" != *.module && "$base_name" != *.parent ]]; then
+              echo "$app_dir"
+            fi
+          done)
+
+          echo "🔎 Applications to validate:"
           echo "$app_dirs"
 
           for app_dir in $app_dirs; do
-            meta_inf_path="$app_dir/META-INF"
-            echo "🔎 Checking if $meta_inf_path exists..."
-            if [ -d "$meta_inf_path" ]; then
-              echo "📦 Found META-INF in: $app_dir"
-              for env in $envs; do
-                env_dir="$app_dir/$env"
-                if [ -d "$env_dir" ]; then
-                  substvar_files=$(find "$env_dir" -maxdepth 1 -type f -name "*.substvar" 2>/dev/null)
-                  if [ -z "$substvar_files" ]; then
-                    echo "❌ ERROR: No .substvar files found in $env_dir"
-                    echo "::error file=$env_dir::Missing .substvar files in environment $env"
-                    violations=$((violations + 1))
-                  else
-                    echo "✅ Found .substvar files in $env_dir"
-                  fi
+            echo "📦 Validating application: $app_dir"
+            for env in $envs; do
+              env_dir="$app_dir/$env"
+              if [ -d "$env_dir" ]; then
+                substvar_files=$(find "$env_dir" -maxdepth 1 -type f -name "*.substvar" 2>/dev/null)
+                if [ -z "$substvar_files" ]; then
+                  echo "❌ ERROR: No .substvar files found in $env_dir"
+                  echo "::error file=$env_dir::Missing .substvar files in environment $env"
+                  violations=$((violations + 1))
                 else
-                  echo "⚠️ Environment directory not found: $env_dir"
+                  echo "✅ Found .substvar files in $env_dir"
                 fi
-              done
-            else
-              echo "⏭️ Skipping $app_dir (no META-INF folder)"
-            fi
+              else
+                echo "⚠️ Environment directory not found: $env_dir"
+              fi
+            done
           done
 
           echo "substvar_violations=$violations" >> "$GITHUB_OUTPUT"
