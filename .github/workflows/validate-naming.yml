@@ -116,11 +116,15 @@ jobs:
           violations=0
           envs="DEV4 IT UAT ST PT AM"
 
-          # Find only first-level directories inside ./test (excluding *.module, *.parent, etc.)
-          app_dirs=$(find ./test -mindepth 1 -maxdepth 1 -type d ! -name "*.module" ! -name "*.parent")
+          # List all top-level folders excluding hidden and *.module/*.parent
+          app_dirs=$(find . -mindepth 1 -maxdepth 1 -type d \
+                      ! -name ".*" \
+                      ! -name "*.module" \
+                      ! -name "*.parent")
 
           for app_dir in $app_dirs; do
             meta_inf_path="$app_dir/META-INF"
+
             if [ -d "$meta_inf_path" ]; then
               echo "📦 Checking application: $app_dir"
               for env in $envs; do
