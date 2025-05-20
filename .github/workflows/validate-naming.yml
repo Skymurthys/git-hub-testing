@@ -95,19 +95,26 @@ jobs:
             echo "🔎 Checking activity (task) names in: $filename"
             mapfile -t tasks < <(grep -oP '<[^:>]*task\b[^>]*name="\K[^"]+' "$file")
 
+            task_errors=0
+
             for task in "${tasks[@]}"; do
-              
               if [[ ! "$task" =~ $pascal_case_regex ]]; then
                 echo "❌ ERROR: Activity name '$task' in $filename must be PascalCase"
                 echo "::error file=$file::Activity name '$task' must be PascalCase"
                 violations=$((violations + 1))
+                task_errors=$((task_errors + 1))
               fi
               if [[ "$task" =~ $special_char_regex ]]; then
                 echo "❌ ERROR: Activity name '$task' contains special characters"
                 echo "::error file=$file::Special characters not allowed in activity name '$task'"
                 violations=$((violations + 1))
+                task_errors=$((task_errors + 1))
               fi
             done
+
+            if [[ $task_errors -eq 0 ]]; then
+              echo "✅ All activity names are valid in $filename"
+            fi
 
           # ✅ VARIABLE (.jsv / .msv) checks
           mapfile -t var_files < <(find . -type f \( -name "*.jsv" -o -name "*.msv" \))
