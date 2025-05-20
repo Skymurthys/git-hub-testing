@@ -57,16 +57,20 @@ jobs:
 
           echo "project_violations=$violations" >> "$GITHUB_OUTPUT"
 
-      - name: Validate process filenames (.bwp files) for camelCase
+      - name: Validate process, activity, variable, and schema names
         id: validate_processes
         shell: bash
         continue-on-error: true
         run: |
-          echo "🔍 STEP 2: Validating process filenames (.bwp) for camelCase..."
+          echo "🔍 STEP 2: Validating naming conventions (processes, activities, variables, schemas)..."
 
           camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
+          pascal_case_regex='^[A-Z][a-z0-9]+([A-Z][a-z0-9]*)*$'
+          special_char_regex='[%$@_#]'
+
           violations=0
 
+          # ✅ PROCESS FILE (.bwp) checks
           mapfile -t bwp_files < <(find . -type f -name "*.bwp")
           echo "🔎 Found ${#bwp_files[@]} .bwp files"
 
@@ -75,8 +79,80 @@ jobs:
             name_without_ext="${filename%.bwp}"
 
             if [[ ! "$name_without_ext" =~ $camel_case_regex ]]; then
-              echo "❌ ERROR: Invalid process name '$filename' (found in $file)"
-              echo "::error file=$file::Invalid process filename '$filename'. Expected camelCase"
+              echo "❌ ERROR: Process name '$name_without_ext' must be camelCase"
+              echo "::error file=$file::Invalid process filename. Must be camelCase"
+              violations=$((violations + 1))
+            fi
+
+            if [[ "$name_without_ext" =~ $special_char_regex ]]; then
+              echo "❌ ERROR: Process name '$name_without_ext' contains special characters"
+              echo "::error file=$file::Special characters not allowed in process name"
+              violations=$((violations + 1))
+            fi
+
+            # ✅ ACTIVITY (task name) checks
+            mapfile -t tasks < <(grep -oP '<task name="\K[^"]+' "$file")
+            for task in "${tasks[@]}"; do
+              if [[ ! "$task" =~ $pascal_case_regex ]]; then
+                echo "❌ ERROR: Activity name '$task' in $fname must be PascalCase"
+                echo "::error file=$file::Activity name '$task' must be PascalCase"
+                violations=$((violations + 1))
+              fi
+              if [[ "$task" =~ $special_char_regex ]]; then
+                echo "❌ ERROR: Activity name '$task' contains special characters"
+                echo "::error file=$file::Special characters not allowed in activity name '$task'"
+                violations=$((violations + 1))
+              fi
+            done
+          done
+
+          # ✅ VARIABLE (.jsv / .msv) checks
+          mapfile -t var_files < <(find . -type f \( -name "*.jsv" -o -name "*.msv" \))
+          echo "🔎 Found ${#var_files[@]} variable files (.jsv/.msv)"
+
+          for vfile in "${var_files[@]}"; do
+            filename=$(basename "$vfile")
+
+            if [[ "$vfile" == *.jsv ]]; then
+              vnames=$(grep -oP '<jobSharedVariable name="\K[^"]+' "$vfile")
+              echo "📄 $filename (.jsv) contains the following variables:"
+            else
+              vnames=$(grep -oP '<moduleSharedVariable name="\K[^"]+' "$vfile")
+              echo "📄 $filename (.msv) contains the following variables:"
+            fi
+
+            echo "$vnames" | sed 's/^/   - /'
+
+            while IFS= read -r var; do
+              if [[ ! "$var" =~ $camel_case_regex ]]; then
+                echo "❌ ERROR: Variable '$var' in $filename must be camelCase"
+                echo "::error file=$vfile::Variable '$var' must be camelCase"
+                violations=$((violations + 1))
+              fi
+              if [[ "$var" =~ $special_char_regex ]]; then
+                echo "❌ ERROR: Variable '$var' in $filename contains special characters"
+                echo "::error file=$vfile::Special characters not allowed in variable name '$var'"
+                violations=$((violations + 1))
+              fi
+            done <<< "$vnames"
+          done
+
+          # ✅ SCHEMA (.xsd) checks
+          mapfile -t xsd_files < <(find . -type f -name "*.xsd")
+          echo "🔎 Found ${#xsd_files[@]} schema files (.xsd)"
+
+          for xsd in "${xsd_files[@]}"; do
+            filename=$(basename "$xsd")
+            xname="${filename%.xsd}"
+
+            if [[ ! "$xname" =~ $camel_case_regex ]]; then
+              echo "❌ ERROR: Schema '$xname' must be camelCase"
+              echo "::error file=$xsd::Schema filename '$xname.xsd' must be camelCase"
+              violations=$((violations + 1))
+            fi
+            if [[ "$xname" =~ $special_char_regex ]]; then
+              echo "❌ ERROR: Schema name '$xname' contains special characters"
+              echo "::error file=$xsd::Special characters not allowed in schema name '$xname'"
               violations=$((violations + 1))
             fi
           done
