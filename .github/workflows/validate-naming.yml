@@ -78,8 +78,6 @@ jobs:
               filename=$(basename "$file")
               base="${filename%.bwp}"
 
-              echo "📄 Validating process: $filename"
-
               if [[ ! "$base" =~ $camel_case_regex ]]; then
                 echo "❌ ERROR: Process name '$base' must be camelCase (found in $file)"
                 echo "::error file=$file::Invalid process name '$base'. Must be camelCase"
