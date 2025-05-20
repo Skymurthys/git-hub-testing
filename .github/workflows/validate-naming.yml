@@ -120,6 +120,8 @@ jobs:
           mapfile -t var_files < <(find . -type f \( -name "*.jsv" -o -name "*.msv" \))
           echo "🔎 Found ${#var_files[@]} variable files (.jsv/.msv)"
 
+          var_violations=0
+
           for vfile in "${var_files[@]}"; do
             filename=$(basename "$vfile")
 
@@ -146,14 +148,20 @@ jobs:
                 echo "❌ ERROR: Variable '$var' in $filename must be camelCase"
                 echo "::error file=$vfile::Variable '$var' must be camelCase"
                 violations=$((violations + 1))
+                var_violations=$((var_violations + 1))
               fi
               if [[ "$var" =~ $special_char_regex ]]; then
                 echo "❌ ERROR: Variable '$var' in $filename contains special characters"
                 echo "::error file=$vfile::Special characters not allowed in variable name '$var'"
                 violations=$((violations + 1))
+                var_violations=$((var_violations + 1))
               fi
             done <<< "$vnames"
           done
+
+          if [[ "$var_violations" -eq 0 ]]; then
+            echo "✅ All variables in .jsv and .msv files follow camelCase and contain no special characters."
+          fi
 
           # ✅ SCHEMA (.xsd) checks
           mapfile -t xsd_files < <(find . -type f -name "*.xsd")
