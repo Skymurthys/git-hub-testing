@@ -18,17 +18,17 @@ jobs:
         shell: bash
         continue-on-error: true
         run: |
-        echo "🔍 STEP 1: Validating project names (.project files) for kebab-case..."
-        violations=0
+          echo "🔍 STEP 1: Validating project names (.project files) for kebab-case..."
+          violations=0
 
-        is_kebab_case() {
-          [[ "$1" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]
-        }
+          is_kebab_case() {
+            [[ "$1" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]
+          }
 
-        IFS=$'\n'
-        project_files=($(find . -type f \( -name ".project" -o -name "*.project" \)))
+          IFS=$'\n'
+          project_files=($(find . -type f \( -name ".project" -o -name "*.project" \)))
 
-        echo "🔎 Found ${#project_files[@]} .project files"
+          echo "🔎 Found ${#project_files[@]} .project files"
 
         for project_file in "${project_files[@]}"; do
           proj_name=$(grep -oPm1 '(?<=<name>)[^<]+' "$project_file" || echo "")
