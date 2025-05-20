@@ -18,44 +18,64 @@ jobs:
         shell: bash
         continue-on-error: true
         run: |
-          echo "🔍 STEP 1: Validating project names (.project files) for kebab-case..."
-          violations=0
+        echo "🔍 STEP 1: Validating project names (.project files) for kebab-case..."
+        violations=0
 
-          is_kebab_case() {
-            [[ "$1" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]
-          }
+        is_kebab_case() {
+          [[ "$1" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]
+        }
 
-          IFS=$'\n'
-          project_files=($(find . -type f \( -name ".project" -o -name "*.project" \)))
+        IFS=$'\n'
+        project_files=($(find . -type f \( -name ".project" -o -name "*.project" \)))
 
-          echo "🔎 Found ${#project_files[@]} .project files"
+        echo "🔎 Found ${#project_files[@]} .project files"
 
-          for project_file in "${project_files[@]}"; do
-            proj_name=$(grep -oPm1 '(?<=<name>)[^<]+' "$project_file" || echo "")
+        for project_file in "${project_files[@]}"; do
+          proj_name=$(grep -oPm1 '(?<=<name>)[^<]+' "$project_file" || echo "")
 
-            if [[ -z "$proj_name" ]]; then
-              echo "❌ ERROR: No <name> tag found in $project_file"
-              echo "::error file=$project_file::Missing <name> tag"
-              violations=$((violations + 1))
-              continue
-            fi
+          if [[ -z "$proj_name" ]]; then
+            echo "❌ ERROR: No <name> tag found in $project_file"
+            echo "::error file=$project_file::Missing <name> tag"
+            violations=$((violations + 1))
+            continue
+          fi
 
-            if [[ "$proj_name" == *.module ]]; then
-              core_name="${proj_name%.module}"
-            elif [[ "$proj_name" == *.parent ]]; then
-              core_name="${proj_name%.parent}"
-            else
-              core_name="$proj_name"
-            fi
+          if [[ "$proj_name" == *.module ]]; then
+            core_name="${proj_name%.module}"
+          elif [[ "$proj_name" == *.parent ]]; then
+            core_name="${proj_name%.parent}"
+          else
+            core_name="$proj_name"
+          fi
 
-            if ! is_kebab_case "$core_name"; then
-              echo "❌ ERROR: Invalid project name '$proj_name' (found in $project_file)"
-              echo "::error file=$project_file::Invalid project name '$proj_name'. Expected kebab-case"
-              violations=$((violations + 1))
-            fi
-          done
+          # ⛔ Must start with "om-"
+          if [[ ! "$core_name" =~ ^om- ]]; then
+            echo "❌ ERROR: Project name '$proj_name' must start with 'om-' (found in $project_file)"
+            echo "::error file=$project_file::Project name '$proj_name' must start with 'om-'"
+            violations=$((violations + 1))
+          fi
 
-          echo "project_violations=$violations" >> "$GITHUB_OUTPUT"
+          # ⛔ Length check
+          if (( ${#core_name} > 3 )); then
+            echo "❌ ERROR: Project name '$proj_name' exceeds 3 characters (found in $project_file)"
+            echo "::error file=$project_file::Project name '$proj_name' exceeds 3 characters (limit: 3)"
+            violations=$((violations + 1))
+          fi
+
+          # ⛔ Kebab-case check
+          if ! is_kebab_case "$core_name"; then
+            echo "❌ ERROR: Invalid project name '$proj_name' (found in $project_file)"
+            echo "::error file=$project_file::Invalid project name '$proj_name'. Expected kebab-case"
+            violations=$((violations + 1))
+          fi
+        done
+
+        # ✅ Success message if no violations
+        if [[ "$violations" -eq 0 ]]; then
+          echo "✅ All project names are valid (start with 'om-', are ≤ 3 chars, and in kebab-case)."
+        fi
+
+        echo "project_violations=$violations" >> "$GITHUB_OUTPUT"
 
       - name: Validate process, activity, variable, and schema names
         id: validate_processes
