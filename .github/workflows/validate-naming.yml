@@ -70,25 +70,27 @@ jobs:
 
           violations=0
 
-          # ✅ PROCESS FILE (.bwp) checks
-          mapfile -t bwp_files < <(find . -type f -name "*.bwp")
-          echo "🔎 Found ${#bwp_files[@]} .bwp files"
+            # ✅ PROCESS FILE (.bwp) checks
+            mapfile -t bwp_files < <(find . -type f -name "*.bwp")
+            echo "🔎 Found ${#bwp_files[@]} .bwp files"
 
-          for file in "${bwp_files[@]}"; do
-            filename=$(basename "$file")
-            name_without_ext="${filename%.bwp}"
+            for file in "${bwp_files[@]}"; do
+              filename=$(basename "$file")
+              base="${filename%.bwp}"
 
-            if [[ ! "$name_without_ext" =~ $camel_case_regex ]]; then
-              echo "❌ ERROR: Process name '$name_without_ext' must be camelCase"
-              echo "::error file=$file::Invalid process filename. Must be camelCase"
-              violations=$((violations + 1))
-            fi
+              echo "📄 Validating process: $filename"
 
-            if [[ "$name_without_ext" =~ $special_char_regex ]]; then
-              echo "❌ ERROR: Process name '$name_without_ext' contains special characters"
-              echo "::error file=$file::Special characters not allowed in process name"
-              violations=$((violations + 1))
-            fi
+              if [[ ! "$base" =~ $camel_case_regex ]]; then
+                echo "❌ ERROR: Process name '$base' must be camelCase (found in $file)"
+                echo "::error file=$file::Invalid process name '$base'. Must be camelCase"
+                violations=$((violations + 1))
+              fi
+
+              if [[ "$base" =~ $special_char_regex ]]; then
+                echo "❌ ERROR: Process name '$base' contains special characters (found in $file)"
+                echo "::error file=$file::Special characters not allowed in process name '$base'"
+                violations=$((violations + 1))
+              fi
 
             # ✅ ACTIVITY (task name) checks
             mapfile -t tasks < <(grep -oP '<task name="\K[^"]+' "$file")
