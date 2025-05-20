@@ -282,12 +282,43 @@ jobs:
           done
 
           echo "substvar_violations=$violations" >> "$GITHUB_OUTPUT"
+          
+      - name: Validate required subfolders in Processes directory of the single .module
+        id: validate_process_structure
+        shell: bash
+        continue-on-error: true
+        run: |
+          echo "🔍 STEP 4: Validating Processes subfolders (Frontend, Backend, Orchestration)..."
+
+          violations=0
+          expected_subdirs=("Frontend" "Backend" "Orchestration")
+
+          module_dir=$(find . -type d -name "*.module" | head -n 1)
+          processes_dir="$module_dir/Processes"
+
+          echo "📂 Checking: $processes_dir"
+
+          for sub in "${expected_subdirs[@]}"; do
+            sub_dir="$processes_dir/$sub"
+            if [[ ! -d "$sub_dir" ]]; then
+              echo "❌ ERROR: Missing subfolder '$sub' in $processes_dir"
+              echo "::error file=$sub_dir::$sub folder missing in Processes"
+              violations=$((violations + 1))
+            fi
+          done
+
+          if [[ "$violations" -eq 0 ]]; then
+            echo "✅ All Processes folders contain Frontend, Backend, and Orchestration subdirectories."
+          fi
+
+          echo "structure_violations=$violations" >> "$GITHUB_OUTPUT"
 
       - name: Fail job if any violations found
         if: |
           steps.validate_projects.outputs.project_violations != '0' || 
           steps.validate_processes.outputs.process_violations != '0' || 
-          steps.validate_substvar.outputs.substvar_violations != '0'
+          steps.validate_substvar.outputs.substvar_violations != '0' ||
+          steps.validate_process_structure.outputs.structure_violations != '0'
         run: |
           echo "❌ Validation errors detected. Failing the job."
           exit 1
