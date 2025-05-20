@@ -74,22 +74,30 @@ jobs:
           mapfile -t bwp_files < <(find . -type f -name "*.bwp")
           echo "🔎 Found ${#bwp_files[@]} .bwp files"
 
+          bwp_violations=0
+
           for file in "${bwp_files[@]}"; do
             filename=$(basename "$file")
             base="${filename%.bwp}"
 
-            # --- Process name validation ---
             if [[ ! "$base" =~ $camel_case_regex ]]; then
               echo "❌ ERROR: Process name '$base' must be camelCase (found in $file)"
               echo "::error file=$file::Invalid process name '$base'. Must be camelCase"
               violations=$((violations + 1))
+              bwp_violations=$((bwp_violations + 1))
             fi
 
             if [[ "$base" =~ $special_char_regex ]]; then
               echo "❌ ERROR: Process name '$base' contains special characters (found in $file)"
               echo "::error file=$file::Special characters not allowed in process name '$base'"
               violations=$((violations + 1))
+              bwp_violations=$((bwp_violations + 1))
             fi
+          done
+
+          if [[ "$bwp_violations" -eq 0 ]]; then
+            echo "✅ All .bwp process filenames follow camelCase and contain no special characters."
+          fi
 
             # ✅ ACTIVITY (task name) checks
             echo "🔎 Checking activity (task) names in: $filename"
@@ -112,7 +120,7 @@ jobs:
             done
 
             if [[ $task_errors -eq 0 ]]; then
-              echo "✅ All activity names are valid in $filename"
+              echo "✅ All activity names are valid in $filename and contain no special characters."
             fi
           done
 
