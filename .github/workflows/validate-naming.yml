@@ -89,7 +89,8 @@ jobs:
                 echo "::error file=$file::Special characters not allowed in process name '$base'"
                 violations=$((violations + 1))
               fi
-
+            done
+            
             # ✅ ACTIVITY (task name) checks
             echo "🔎 Checking activity (task) names in: $filename"
             mapfile -t tasks < <(grep -oP '<[^:>]*task\b[^>]*name="\K[^"]+' "$file")
