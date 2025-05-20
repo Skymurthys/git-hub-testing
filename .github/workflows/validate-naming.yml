@@ -70,51 +70,52 @@ jobs:
 
           violations=0
 
-            # ✅ PROCESS FILE (.bwp) checks
-            mapfile -t bwp_files < <(find . -type f -name "*.bwp")
-            echo "🔎 Found ${#bwp_files[@]} .bwp files"
+        # ✅ PROCESS FILE (.bwp) checks
+        mapfile -t bwp_files < <(find . -type f -name "*.bwp")
+        echo "🔎 Found ${#bwp_files[@]} .bwp files"
 
-            for file in "${bwp_files[@]}"; do
-              filename=$(basename "$file")
-              base="${filename%.bwp}"
+        for file in "${bwp_files[@]}"; do
+          filename=$(basename "$file")
+          base="${filename%.bwp}"
 
-              if [[ ! "$base" =~ $camel_case_regex ]]; then
-                echo "❌ ERROR: Process name '$base' must be camelCase (found in $file)"
-                echo "::error file=$file::Invalid process name '$base'. Must be camelCase"
-                violations=$((violations + 1))
-              fi
+          # --- Process name validation ---
+          if [[ ! "$base" =~ $camel_case_regex ]]; then
+            echo "❌ ERROR: Process name '$base' must be camelCase (found in $file)"
+            echo "::error file=$file::Invalid process name '$base'. Must be camelCase"
+            violations=$((violations + 1))
+          fi
 
-              if [[ "$base" =~ $special_char_regex ]]; then
-                echo "❌ ERROR: Process name '$base' contains special characters (found in $file)"
-                echo "::error file=$file::Special characters not allowed in process name '$base'"
-                violations=$((violations + 1))
-              fi
-            done
-            
-            # ✅ ACTIVITY (task name) checks
-            echo "🔎 Checking activity (task) names in: $filename"
-            mapfile -t tasks < <(grep -oP '<[^:>]*task\b[^>]*name="\K[^"]+' "$file")
+          if [[ "$base" =~ $special_char_regex ]]; then
+            echo "❌ ERROR: Process name '$base' contains special characters (found in $file)"
+            echo "::error file=$file::Special characters not allowed in process name '$base'"
+            violations=$((violations + 1))
+          fi
 
-            task_errors=0
+          # ✅ ACTIVITY (task name) checks
+          echo "🔎 Checking activity (task) names in: $filename"
+          mapfile -t tasks < <(grep -oP '<[^:>]*task\b[^>]*name="\K[^"]+' "$file")
 
-            for task in "${tasks[@]}"; do
-              if [[ ! "$task" =~ $pascal_case_regex ]]; then
-                echo "❌ ERROR: Activity name '$task' in $filename must be PascalCase"
-                echo "::error file=$file::Activity name '$task' must be PascalCase"
-                violations=$((violations + 1))
-                task_errors=$((task_errors + 1))
-              fi
-              if [[ "$task" =~ $special_char_regex ]]; then
-                echo "❌ ERROR: Activity name '$task' contains special characters"
-                echo "::error file=$file::Special characters not allowed in activity name '$task'"
-                violations=$((violations + 1))
-                task_errors=$((task_errors + 1))
-              fi
-            done
-
-            if [[ $task_errors -eq 0 ]]; then
-              echo "✅ All activity names are valid in $filename"
+          task_errors=0
+          for task in "${tasks[@]}"; do
+            if [[ ! "$task" =~ $pascal_case_regex ]]; then
+              echo "❌ ERROR: Activity name '$task' in $filename must be PascalCase"
+              echo "::error file=$file::Activity name '$task' must be PascalCase"
+              violations=$((violations + 1))
+              task_errors=$((task_errors + 1))
             fi
+            if [[ "$task" =~ $special_char_regex ]]; then
+              echo "❌ ERROR: Activity name '$task' contains special characters"
+              echo "::error file=$file::Special characters not allowed in activity name '$task'"
+              violations=$((violations + 1))
+              task_errors=$((task_errors + 1))
+            fi
+          done
+
+          if [[ $task_errors -eq 0 ]]; then
+            echo "✅ All activity names are valid in $filename"
+          fi
+
+        done
 
           # ✅ VARIABLE (.jsv / .msv) checks
           mapfile -t var_files < <(find . -type f \( -name "*.jsv" -o -name "*.msv" \))
