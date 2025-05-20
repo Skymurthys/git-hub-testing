@@ -167,6 +167,8 @@ jobs:
           mapfile -t xsd_files < <(find . -type f -name "*.xsd")
           echo "🔎 Found ${#xsd_files[@]} schema files (.xsd)"
 
+          xsd_violations=0
+
           for xsd in "${xsd_files[@]}"; do
             filename=$(basename "$xsd")
             xname="${filename%.xsd}"
@@ -175,15 +177,19 @@ jobs:
               echo "❌ ERROR: Schema '$xname' must be camelCase"
               echo "::error file=$xsd::Schema filename '$xname.xsd' must be camelCase"
               violations=$((violations + 1))
+              xsd_violations=$((xsd_violations + 1))
             fi
             if [[ "$xname" =~ $special_char_regex ]]; then
               echo "❌ ERROR: Schema name '$xname' contains special characters"
               echo "::error file=$xsd::Special characters not allowed in schema name '$xname'"
               violations=$((violations + 1))
+              xsd_violations=$((xsd_violations + 1))
             fi
           done
 
-          echo "process_violations=$violations" >> "$GITHUB_OUTPUT"
+          if [[ "$xsd_violations" -eq 0 ]]; then
+            echo "✅ All .xsd schema filenames follow camelCase and contain no special characters."
+          fi
 
       - name: Validate presence of .substvar files in META-INF folders for specific environments
         id: validate_substvar
