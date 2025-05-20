@@ -91,10 +91,13 @@ jobs:
               fi
 
             # ✅ ACTIVITY (task name) checks
-            mapfile -t tasks < <(grep -oP '<task name="\K[^"]+' "$file")
+            echo "🔎 Checking activity (task) names in: $filename"
+            mapfile -t tasks < <(grep -oP '<[^:>]*task\b[^>]*name="\K[^"]+' "$file")
+
             for task in "${tasks[@]}"; do
+              
               if [[ ! "$task" =~ $pascal_case_regex ]]; then
-                echo "❌ ERROR: Activity name '$task' in $fname must be PascalCase"
+                echo "❌ ERROR: Activity name '$task' in $filename must be PascalCase"
                 echo "::error file=$file::Activity name '$task' must be PascalCase"
                 violations=$((violations + 1))
               fi
@@ -104,7 +107,6 @@ jobs:
                 violations=$((violations + 1))
               fi
             done
-          done
 
           # ✅ VARIABLE (.jsv / .msv) checks
           mapfile -t var_files < <(find . -type f \( -name "*.jsv" -o -name "*.msv" \))
