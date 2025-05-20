@@ -127,52 +127,64 @@ jobs:
               echo "✅ All .bwp process filenames follow camelCase and contain no special characters."
             fi
 
-          # ✅ VARIABLE (.jsv / .msv) checks
-          mapfile -t var_files < <(find . -type f \( -name "*.jsv" -o -name "*.msv" \))
-          echo "🔎 Found ${#var_files[@]} variable files (.jsv/.msv)"
+            # ✅ VARIABLE (.jsv / .msv) checks
+            mapfile -t var_files < <(find . -type f \( -name "*.jsv" -o -name "*.msv" \))
+            echo "🔎 Found ${#var_files[@]} variable files (.jsv/.msv)"
 
-          var_violations=0
+            var_violations=0
+            jsv_violations=0
+            msv_violations=0
 
-          for vfile in "${var_files[@]}"; do
-            filename=$(basename "$vfile")
+            for vfile in "${var_files[@]}"; do
+              filename=$(basename "$vfile")
 
-            if [[ "$vfile" == *.jsv ]]; then
-              vnames=$(grep -oP '<jobSharedVariable name="\K[^"]+' "$vfile" || true)
-              var_type=".jsv"
-            else
-              vnames=$(grep -oP '<moduleSharedVariable name="\K[^"]+' "$vfile" || true)
-              var_type=".msv"
+              if [[ "$vfile" == *.jsv ]]; then
+                vnames=$(grep -oP '<jobSharedVariable name="\K[^"]+' "$vfile" || true)
+                var_type=".jsv"
+              else
+                vnames=$(grep -oP '<moduleSharedVariable name="\K[^"]+' "$vfile" || true)
+                var_type=".msv"
+              fi
+
+              var_count=$(echo "$vnames" | grep -c . || true)
+
+              if [[ "$var_count" -eq 0 ]]; then
+                echo "📄 $filename ($var_type) contains 0 variables."
+              else
+                echo "📄 $filename ($var_type) contains $var_count variable(s):"
+                echo "$vnames" | sed 's/^/   - /'
+              fi
+
+              while IFS= read -r var; do
+                if [[ -z "$var" ]]; then continue; fi
+
+                if [[ ! "$var" =~ $camel_case_regex ]]; then
+                  echo "❌ ERROR: Variable '$var' in $filename must be camelCase"
+                  echo "::error file=$vfile::Variable '$var' must be camelCase"
+                  violations=$((violations + 1))
+                  var_violations=$((var_violations + 1))
+                  [[ "$var_type" == ".jsv" ]] && jsv_violations=$((jsv_violations + 1))
+                  [[ "$var_type" == ".msv" ]] && msv_violations=$((msv_violations + 1))
+                fi
+
+                if [[ "$var" =~ $special_char_regex ]]; then
+                  echo "❌ ERROR: Variable '$var' in $filename contains special characters"
+                  echo "::error file=$vfile::Special characters not allowed in variable name '$var'"
+                  violations=$((violations + 1))
+                  var_violations=$((var_violations + 1))
+                  [[ "$var_type" == ".jsv" ]] && jsv_violations=$((jsv_violations + 1))
+                  [[ "$var_type" == ".msv" ]] && msv_violations=$((msv_violations + 1))
+                fi
+              done <<< "$vnames"
+            done
+
+            if [[ "$jsv_violations" -eq 0 ]]; then
+              echo "✅ All variables in .jsv files follow camelCase and contain no special characters."
             fi
 
-            var_count=$(echo "$vnames" | grep -c . || true)
-
-            if [[ "$var_count" -eq 0 ]]; then
-              echo "📄 $filename ($var_type) contains 0 variables."
-            else
-              echo "📄 $filename ($var_type) contains $var_count variable(s):"
-              echo "$vnames" | sed 's/^/   - /'
+            if [[ "$msv_violations" -eq 0 ]]; then
+              echo "✅ All variables in .msv files follow camelCase and contain no special characters."
             fi
-
-            while IFS= read -r var; do
-              if [[ -z "$var" ]]; then continue; fi
-              if [[ ! "$var" =~ $camel_case_regex ]]; then
-                echo "❌ ERROR: Variable '$var' in $filename must be camelCase"
-                echo "::error file=$vfile::Variable '$var' must be camelCase"
-                violations=$((violations + 1))
-                var_violations=$((var_violations + 1))
-              fi
-              if [[ "$var" =~ $special_char_regex ]]; then
-                echo "❌ ERROR: Variable '$var' in $filename contains special characters"
-                echo "::error file=$vfile::Special characters not allowed in variable name '$var'"
-                violations=$((violations + 1))
-                var_violations=$((var_violations + 1))
-              fi
-            done <<< "$vnames"
-          done
-
-          if [[ "$var_violations" -eq 0 ]]; then
-            echo "✅ All variables in .jsv and .msv files follow camelCase and contain no special characters."
-          fi
 
           # ✅ SCHEMA (.xsd) checks
           mapfile -t xsd_files < <(find . -type f -name "*.xsd")
