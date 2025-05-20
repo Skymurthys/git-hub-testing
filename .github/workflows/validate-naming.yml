@@ -114,16 +114,24 @@ jobs:
             filename=$(basename "$vfile")
 
             if [[ "$vfile" == *.jsv ]]; then
-              vnames=$(grep -oP '<jobSharedVariable name="\K[^"]+' "$vfile")
-              echo "📄 $filename (.jsv) contains the following variables:"
+              vnames=$(grep -oP '<jobSharedVariable name="\K[^"]+' "$vfile" || true)
+              var_type=".jsv"
             else
-              vnames=$(grep -oP '<moduleSharedVariable name="\K[^"]+' "$vfile")
-              echo "📄 $filename (.msv) contains the following variables:"
+              vnames=$(grep -oP '<moduleSharedVariable name="\K[^"]+' "$vfile" || true)
+              var_type=".msv"
             fi
 
-            echo "$vnames" | sed 's/^/   - /'
+            var_count=$(echo "$vnames" | grep -c . || true)
+
+            if [[ "$var_count" -eq 0 ]]; then
+              echo "📄 $filename ($var_type) contains 0 variables."
+            else
+              echo "📄 $filename ($var_type) contains $var_count variable(s):"
+              echo "$vnames" | sed 's/^/   - /'
+            fi
 
             while IFS= read -r var; do
+              if [[ -z "$var" ]]; then continue; fi
               if [[ ! "$var" =~ $camel_case_regex ]]; then
                 echo "❌ ERROR: Variable '$var' in $filename must be camelCase"
                 echo "::error file=$vfile::Variable '$var' must be camelCase"
