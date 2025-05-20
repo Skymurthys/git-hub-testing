@@ -283,7 +283,7 @@ jobs:
 
           echo "substvar_violations=$violations" >> "$GITHUB_OUTPUT"
           
-      - name: Validate required subfolders in Processes directory of the single .module
+      - name: Validate required subfolders in Processes directory of the .module
         id: validate_process_structure
         shell: bash
         continue-on-error: true
