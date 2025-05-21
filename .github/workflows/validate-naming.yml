@@ -320,80 +320,86 @@ jobs:
         run: |
           echo "🔍 STEP 5: Validating REST path and parameter naming..."
 
-          module_bwm_file=$(find . -path "*/META-INF/module.bwm" | head -n 1)
+          bwm_file="./namingcheck/Test.module/META-INF/module.bwm"
+          violations=0
+          path_param_violations=0
+          query_param_violations=0
+          path_format_violations=0
 
-          if [[ ! -f "$module_bwm_file" ]]; then
-            echo "❌ ERROR: module.bwm file not found."
+          if [[ ! -f "$bwm_file" ]]; then
+            echo "❌ ERROR: File not found: $bwm_file"
+            echo "::error file=$bwm_file::File not found"
             exit 1
           fi
 
-          total_violations=0
+          kebab_case_regex='^[a-z0-9]+(-[a-z0-9]+)*$'
+          camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
 
-          # Step 5.1: Validate REST resource path (kebab-case)
           echo "🔹 Validating REST resource paths..."
-          rest_path=$(xmllint --xpath "string(//scaext:binding[@xsi:type='rest:RestServiceBinding']/@path)" "$module_bwm_file" 2>/dev/null)
+          mapfile -t paths < <(grep -oP 'RestServiceBinding[^>]*\spath="\K[^"]+' "$bwm_file")
 
-          if [[ -z "$rest_path" ]]; then
+          if [[ ${#paths[@]} -eq 0 ]]; then
             echo "❌ ERROR: REST resource path not found."
-            total_violations=$((total_violations + 1))
-          else
-            kebab_ok=true
-            IFS='/' read -ra segments <<< "$rest_path"
-            for seg in "${segments[@]}"; do
-              if [[ "$seg" =~ ^\{.*\}$ ]]; then
-                continue  # Ignore path parameters
-              fi
-              if [[ "$seg" =~ [A-Z] ]]; then
-                echo "::error file=$module_bwm_file::Path segment '$seg' in '$rest_path' must be kebab-case"
-                kebab_ok=false
-                total_violations=$((total_violations + 1))
+            echo "::error file=$bwm_file::REST resource path (path=\"...\") not found"
+            exit 1
+          fi
+
+          for path in "${paths[@]}"; do
+            echo "🔸 Checking path: $path"
+            cleaned_path=$(echo "$path" | sed 's#^/##;s#/$##')
+            IFS='/' read -ra segments <<< "$cleaned_path"
+            for segment in "${segments[@]}"; do
+              [[ "$segment" =~ ^\{.*\}$ ]] && continue
+              if [[ ! "$segment" =~ $kebab_case_regex ]]; then
+                echo "::error file=$bwm_file::Path segment '$segment' in '$path' must be kebab-case"
+                path_format_violations=$((path_format_violations + 1))
               fi
             done
-            if [[ "$kebab_ok" == true ]]; then
-              echo "✅ REST resource path passed validation."
+          done
+
+          if [[ "$path_format_violations" -eq 0 ]]; then
+            echo "✅ REST path segments passed kebab-case validation."
+          fi
+
+          # Path Parameters
+          mapfile -t path_params < <(grep 'parameterMapping' "$bwm_file" | grep 'parameterType="Path"')
+          if [[ ${#path_params[@]} -gt 0 ]]; then
+            echo "🔹 Validating Path Parameters..."
+            for line in "${path_params[@]}"; do
+              name=$(echo "$line" | grep -oP 'parameterName="\K[^"]+')
+              echo "- Path parameter: $name"
+              if [[ ! "$name" =~ $camel_case_regex ]]; then
+                echo "::error file=$bwm_file::Path parameter '$name' must be camelCase"
+                path_param_violations=$((path_param_violations + 1))
+              fi
+            done
+            if [[ "$path_param_violations" -eq 0 ]]; then
+              echo "✅ Path parameters passed camelCase validation."
             fi
+          else
+            echo "ℹ️ No Path Parameters found. Skipping path parameter name validation."
           fi
 
-          # Step 5.2: Validate Path Parameters (camelCase)
-          echo "🔹 Validating Path Parameters..."
-          path_params=$(xmllint --xpath "//rest:parameters/rest:parameterMapping[@parameterType='Path']" "$module_bwm_file" 2>/dev/null || true)
-
-          if [[ -n "$path_params" ]]; then
-            echo "$path_params" | xmllint --xpath "//@parameterName" - 2>/dev/null | sed -E 's/parameterName="([^"]*)"/\1\n/g' | while read -r param; do
-              if [[ -n "$param" ]]; then
-                echo "- Path parameter: $param"
-                if [[ "$param" =~ ^[a-z][a-zA-Z0-9]*$ ]]; then
-                  echo "✅ Path parameter '$param' passed validation."
-                else
-                  echo "::error file=$module_bwm_file::Path parameter '$param' must be camelCase"
-                  total_violations=$((total_violations + 1))
-                fi
+          # Query Parameters
+          mapfile -t query_params < <(grep 'parameterMapping' "$bwm_file" | grep 'parameterType="Query"')
+          if [[ ${#query_params[@]} -gt 0 ]]; then
+            echo "🔹 Validating Query Parameters..."
+            for line in "${query_params[@]}"; do
+              name=$(echo "$line" | grep -oP 'parameterName="\K[^"]+')
+              echo "- Query parameter: $name"
+              if [[ ! "$name" =~ $camel_case_regex ]]; then
+                echo "::error file=$bwm_file::Query parameter '$name' must be camelCase"
+                query_param_violations=$((query_param_violations + 1))
               fi
             done
+            if [[ "$query_param_violations" -eq 0 ]]; then
+              echo "✅ Query parameters passed camelCase validation."
+            fi
           else
-            echo "ℹ️ No path parameters to validate."
+            echo "ℹ️ No Query Parameters found. Skipping query parameter name validation."
           fi
 
-          # Step 5.3: Validate Query Parameters (camelCase)
-          echo "🔹 Validating Query Parameters..."
-          query_params=$(xmllint --xpath "//rest:operation/rest:parameters/rest:parameterMapping[@parameterType='Query']" "$module_bwm_file" 2>/dev/null || true)
-
-          if [[ -n "$query_params" ]]; then
-            echo "$query_params" | xmllint --xpath "//@parameterName" - 2>/dev/null | sed -E 's/parameterName="([^"]*)"/\1\n/g' | while read -r param; do
-              if [[ -n "$param" ]]; then
-                echo "- Query parameter: $param"
-                if [[ "$param" =~ ^[a-z][a-zA-Z0-9]*$ ]]; then
-                  echo "✅ Query parameter '$param' passed validation."
-                else
-                  echo "::error file=$module_bwm_file::Query parameter '$param' must be camelCase"
-                  total_violations=$((total_violations + 1))
-                fi
-              fi
-            done
-          else
-            echo "ℹ️ No query parameters to validate."
-          fi
-
+          total_violations=$((path_format_violations + path_param_violations + query_param_violations))
           echo "rest_naming_violations=$total_violations" >> "$GITHUB_OUTPUT"
 
       - name: Fail job if any violations found
