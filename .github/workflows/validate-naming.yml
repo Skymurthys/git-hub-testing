@@ -312,13 +312,95 @@ jobs:
           fi
 
           echo "structure_violations=$violations" >> "$GITHUB_OUTPUT"
+          
+      - name: Validate REST path and parameter naming
+        shell: bash
+        run: |
+          echo "🔍 STEP 5: Validating REST path and parameter naming..."
+
+          bwm_file="./namingcheck/Test.module/META-INF/module.bwm"
+          violations=0
+          path_param_violations=0
+          query_param_violations=0
+          path_format_violations=0
+
+          if [[ ! -f "$bwm_file" ]]; then
+            echo "❌ ERROR: File not found: $bwm_file"
+            echo "::error file=$bwm_file::File not found"
+            exit 1
+          fi
+
+          kebab_case_regex='^[a-z0-9]+(-[a-z0-9]+)*$'
+          camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
+
+          # Always validate REST resource paths
+          echo "🔹 Validating REST resource paths..."
+          mapfile -t paths < <(grep -oP 'RestServiceBinding[^>]*\spath="\K[^"]+' "$bwm_file")
+          for path in "${paths[@]}"; do
+            echo "🔸 Checking path: $path"
+            cleaned_path=$(echo "$path" | sed 's#^/##;s#/$##')
+            IFS='/' read -ra segments <<< "$cleaned_path"
+            for segment in "${segments[@]}"; do
+              [[ "$segment" =~ ^\{.*\}$ ]] && continue
+              if [[ ! "$segment" =~ $kebab_case_regex ]]; then
+                echo "::error file=$bwm_file::Path segment '$segment' in '$path' must be kebab-case"
+                path_format_violations=$((path_format_violations + 1))
+              fi
+            done
+          done
+
+          if [[ "$path_format_violations" -eq 0 ]]; then
+            echo "✅ REST path segments passed kebab-case validation."
+          fi
+
+          # Path Parameters
+          mapfile -t path_params < <(grep 'parameterMapping' "$bwm_file" | grep 'parameterType="Path"')
+          if [[ ${#path_params[@]} -gt 0 ]]; then
+            echo "🔹 Validating Path Parameters..."
+            for line in "${path_params[@]}"; do
+              name=$(echo "$line" | grep -oP 'parameterName="\K[^"]+')
+              echo "- Path parameter: $name"
+              if [[ ! "$name" =~ $camel_case_regex ]]; then
+                echo "::error file=$bwm_file::Path parameter '$name' must be camelCase"
+                path_param_violations=$((path_param_violations + 1))
+              fi
+            done
+            if [[ "$path_param_violations" -eq 0 ]]; then
+              echo "✅ Path parameters passed camelCase validation."
+            fi
+          else
+            echo "ℹ️ No Path Parameters found. Skipping path parameter name validation."
+          fi
+
+          # Query Parameters
+          mapfile -t query_params < <(grep 'parameterMapping' "$bwm_file" | grep 'parameterType="Query"')
+          if [[ ${#query_params[@]} -gt 0 ]]; then
+            echo "🔹 Validating Query Parameters..."
+            for line in "${query_params[@]}"; do
+              name=$(echo "$line" | grep -oP 'parameterName="\K[^"]+')
+              echo "- Query parameter: $name"
+              if [[ ! "$name" =~ $camel_case_regex ]]; then
+                echo "::error file=$bwm_file::Query parameter '$name' must be camelCase"
+                query_param_violations=$((query_param_violations + 1))
+              fi
+            done
+            if [[ "$query_param_violations" -eq 0 ]]; then
+              echo "✅ Query parameters passed camelCase validation."
+            fi
+          else
+            echo "ℹ️ No Query Parameters found. Skipping query parameter name validation."
+          fi
+
+          total_violations=$((path_format_violations + path_param_violations + query_param_violations))
+          echo "rest_naming_violations=$total_violations" >> "$GITHUB_OUTPUT"          
 
       - name: Fail job if any violations found
         if: |
           steps.validate_projects.outputs.project_violations != '0' || 
           steps.validate_processes.outputs.process_violations != '0' || 
           steps.validate_substvar.outputs.substvar_violations != '0' ||
-          steps.validate_process_structure.outputs.structure_violations != '0'
+          steps.validate_process_structure.outputs.structure_violations != '0' ||
+          steps.validate_rest_naming.outputs.rest_naming_violations != '0'
         run: |
           echo "❌ Validation errors detected. Failing the job."
           exit 1
