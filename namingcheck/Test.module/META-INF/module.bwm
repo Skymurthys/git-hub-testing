@@ -11,6 +11,8 @@
   <sca:property xmi:id="_S6rF0C_jEfCmZ6HuaFp6lw" name="BW.MODULE.NAME" type="XMLSchema:string" scalable="true"/>
   <sca:property xmi:id="_rGkVADS4EfCgXogotHnyVw" name="newProperty" type="XMLSchema:string" publicAccess="true" scalable="true"/>
   <sca:component xmi:id="_VRwKkC_mEfCayeDfydI4Aw" name="ComponentProcess" compositeext:version="1.0.0.qualifier">
-    <scaext:implementation xsi:type="BW:BWComponentImplementation" xmi:id="_VRwKkS_mEfCayeDfydI4Aw" processName="test.abcprocess"/>
+  </sca:component>
+  <sca:component xmi:id="_C-c0ADYVEfCVY8wQVdKuwQ" name="ComponentProcess1" compositeext:version="1.0.0.qualifier">
+    <scaext:implementation xsi:type="BW:BWComponentImplementation" xmi:id="_C-c0ATYVEfCVY8wQVdKuwQ" processName="Frontend.Process"/>
   </sca:component>
 </sca:composite>
