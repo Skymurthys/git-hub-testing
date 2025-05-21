@@ -9,7 +9,7 @@
   "basePath" : "/",
   "schemes" : [ "http" ],
   "paths" : {
-    "/Resource/{Id}" : {
+    "/Resource/{id}" : {
       "post" : {
         "summary" : "postResource",
         "description" : "postResource",
@@ -31,7 +31,7 @@
           "type" : "string",
           "required" : false
         }, {
-          "name" : "Id",
+          "name" : "id",
           "in" : "path",
           "description" : "",
           "type" : "string",
