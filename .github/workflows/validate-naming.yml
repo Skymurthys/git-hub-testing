@@ -333,9 +333,15 @@ jobs:
           kebab_case_regex='^[a-z0-9]+(-[a-z0-9]+)*$'
           camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
 
-          # Always validate REST resource paths
           echo "🔹 Validating REST resource paths..."
           mapfile -t paths < <(grep -oP 'RestServiceBinding[^>]*\spath="\K[^"]+' "$bwm_file")
+
+          if [[ ${#paths[@]} -eq 0 ]]; then
+            echo "❌ ERROR: REST resource path not found."
+            echo "::error file=$bwm_file::REST resource path (path=\"...\") not found"
+            exit 1
+          fi
+
           for path in "${paths[@]}"; do
             echo "🔸 Checking path: $path"
             cleaned_path=$(echo "$path" | sed 's#^/##;s#/$##')
@@ -392,7 +398,7 @@ jobs:
           fi
 
           total_violations=$((path_format_violations + path_param_violations + query_param_violations))
-          echo "rest_naming_violations=$total_violations" >> "$GITHUB_OUTPUT"          
+          echo "rest_naming_violations=$total_violations" >> "$GITHUB_OUTPUT"
 
       - name: Fail job if any violations found
         if: |
