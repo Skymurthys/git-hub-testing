@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpws:process exitOnStandardFault="no" name="test.abcprocess"
+<bpws:process exitOnStandardFault="no" name="Frontend.Process"
     suppressJoinFailure="yes"
     targetNamespace="http://xmlns.example.com/20250513160756"
     xmlns:bpws="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
@@ -516,7 +516,8 @@
                     <bpws:targets>
                         <bpws:target linkName="MapperdToCallProcess"/>
                     </bpws:targets>
-                    <tibex:CallProcess subProcessName="test.SubProcess" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions"/>
+                    <tibex:CallProcess
+                        subProcessName="Frontend.SubProcess" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions"/>
                 </tibex:extActivity>
             </bpws:extensionActivity>
         </bpws:flow>
