@@ -333,6 +333,13 @@ jobs:
               exit 1
             fi
             
+            # 🔍 Pre-check for RestServiceBinding before running validations
+            if ! grep -q 'scaext:binding[^>]*xsi:type="rest:RestServiceBinding"' "$bwm_file"; then
+              echo "ℹ️ No REST binding (xsi:type=\"rest:RestServiceBinding\") found in $bwm_file"
+              echo "Skipping REST naming validation as no REST binding exists."
+              exit 0
+            fi
+
             kebab_case_regex='^[a-z0-9]+(-[a-z0-9]+)*$'
             camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
             
@@ -402,6 +409,7 @@ jobs:
             
             total_violations=$((path_format_violations + path_param_violations + query_param_violations))
             echo "rest_naming_violations=$total_violations" >> "$GITHUB_OUTPUT"
+
             
       - name: Fail job if any violations found
         if: |
