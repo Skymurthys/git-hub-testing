@@ -1,4 +1,11 @@
 {
-    "records": [],
-    "resources": []
+    "records": [{
+        "name": "Cloud",
+        "items": [],
+        "url": "https://integration.cloud.tibco.com:443"
+    }],
+    "resources": [{
+        "location": "Service Descriptors/Frontend.Resource-Resource.json",
+        "type": "generated"
+    }]
 }
