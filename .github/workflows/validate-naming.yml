@@ -313,11 +313,11 @@ jobs:
 
           echo "structure_violations=$violations" >> "$GITHUB_OUTPUT"
           
-        - name: Validate REST path and parameter naming
-          id: validate_rest_naming
-          shell: bash
-          continue-on-error: true
-          run: |
+      - name: Validate REST path and parameter naming
+        id: validate_rest_naming
+        shell: bash
+        continue-on-error: true
+        run: |
             echo "🔍 STEP 5: Validating REST path and parameter naming..."
             
             bwm_file="./namingcheck/Test.module/META-INF/module.bwm"
