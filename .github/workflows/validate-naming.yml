@@ -373,7 +373,49 @@ jobs:
             echo "  Service Name: $svc"
           done
           echo
-          done  
+          done
+          # Extract composite block
+          composite_block=$(xmllint --xpath '/*[local-name()="composite"]' "$module_bwm_file" 2>/dev/null)
+
+          if [[ -n "$composite_block" ]]; then
+            for component in "${component_blocks[@]}"; do
+              process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
+              [[ -z "$process_name" ]] && continue
+
+              mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component")
+            [[ ${#service_names[@]} -eq 0 ]] && continue
+
+              echo "Process Name: $process_name"
+ 
+              for svc in "${service_names[@]}"; do
+                echo "  Service Name: $svc"
+
+                # Search matching service in composite
+                 svc_block=$(grep -Poz "<sca:service[^>]*name=\"$svc\"[^>]*>.*?</sca:service>" <<< "$composite_block" | tr -d '\0')
+                [[ -z "$svc_block" ]] && continue
+
+                # Extract path from <scaext:binding>
+                path=$(grep -oP '<scaext:binding[^>]*path="\K[^"]+' <<< "$svc_block")
+                echo "    REST Path: $path"
+
+              # Extract parameter mappings
+                echo "$svc_block" | grep -Poz '<parameterMapping[^>]*>' | tr '\0' '\n' | while read -r param_line; do
+                  name=$(grep -oP 'parameterName="\K[^"]+' <<< "$param_line")
+                  type=$(grep -oP 'parameterType="\K[^"]+' <<< "$param_line")
+                  required=$(grep -oP 'required="\K[^"]+' <<< "$param_line")
+
+                  echo "      Parameter:"
+                  echo "        Name: $name"
+                  echo "        Type: $type"
+                  echo "        Required: ${required:-false}"
+
+                # Optional: Add validation for type or naming conventions here
+                done
+              done
+              echo
+            done
+          fi
+          
           
       - name: Fail job if any violations found
         if: |
