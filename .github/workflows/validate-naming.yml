@@ -402,10 +402,10 @@ jobs:
             echo "🔹 Process: $process_name"
 
           for service_ref in "${service_names[@]}"; do
-            rest_path=${service_to_path[$service_ref]:-}
+            rest_path="${service_to_path[$service_ref]-}"
             [[ -n "$rest_path" ]] || rest_path="N/A"
 
-            params=${service_to_params[$service_ref]:-}
+            params="${service_to_params[$service_ref]-}"
             [[ -n "$params" ]] || params="None"
 
             echo "   └─ Service: $service_ref"
