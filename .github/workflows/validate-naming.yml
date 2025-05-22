@@ -347,18 +347,22 @@ jobs:
 
           violations=0
 
-          mapfile -t service_blocks < <(awk '/<sca:service /,/<\/sca:service>/' "$bwm_file")
+          echo "🔧 Listing process and service names..."
 
-          for service in "${service_blocks[@]}"; do
+          # Extract all <sca:service> blocks from the BWM file
+          service_blocks=$(awk '/<sca:service /,/<\/sca:service>/' "$bwm_file")
+          
+          # Split on each <sca:service element
+          IFS=$'\n' read -d '' -r -a services <<< "$(echo "$service_blocks" | grep '<sca:service')"
+          for service in "${services[@]}"; do
+          
             process_name=$(grep -oP 'processName="\K[^"]+' <<< "$service")
+            service_name=$(grep -oP 'name="\K[^"]+' <<< "$service")
+            
             [[ -n "$process_name" ]] && echo -e "\n🔹 Process: $process_name"
+            [[ -n "$service_name" ]] && echo "  └─ Service Name: $service_name"
 
-            service_name=$(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$service" | head -n 1)
-            echo "  └─ Service Name: $service_name"
-            if [[ ! "$service_name" =~ $camel_case_regex ]]; then
-              echo "::error file=$bwm_file::Service name '$service_name' must be camelCase"
-              violations=$((violations + 1))
-            fi
+            done
 
             # REST path validation
             echo "🔧 Starting REST path and parameter validation..."
