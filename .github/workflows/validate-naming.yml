@@ -354,8 +354,6 @@ jobs:
             fi
           done < "$bwm_file"
 
-          echo "DEBUG: Total components found: ${#component_blocks[@]}"
-
           for component in "${component_blocks[@]}"; do
           # Extract processName from <scaext:implementation ... processName="...">
             process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
