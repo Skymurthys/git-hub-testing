@@ -394,24 +394,31 @@ jobs:
           echo -e "\n🗂️ REST Service Summary:\n"
 
           for component in "${component_blocks[@]}"; do
-            process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component")
-            mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component")
+            process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || true)
+            mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component" || true)
 
             [[ -n "$process_name" && ${#service_names[@]} -gt 0 ]] || continue
 
             echo "🔹 Process: $process_name"
 
           for service_ref in "${service_names[@]}"; do
-            rest_path="${service_to_path[$service_ref]-}"
-            [[ -n "$rest_path" ]] || rest_path="N/A"
+            if [[ -v service_to_path["$service_ref"] ]]; then
+              rest_path="${service_to_path["$service_ref"]}"
+            else
+              rest_path="N/A"
+            fi
 
-            params="${service_to_params[$service_ref]-}"
-            [[ -n "$params" ]] || params="None"
+            if [[ -v service_to_params["$service_ref"] ]]; then
+              params="${service_to_params["$service_ref"]}"
+            else
+              params="None"
+            fi
 
             echo "   └─ Service: $service_ref"
             echo "      └─ REST Path: $rest_path"
             echo "      └─ Parameters: $params"
           done
+
           echo
           done
           
