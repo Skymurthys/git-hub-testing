@@ -318,6 +318,9 @@ jobs:
         shell: bash
         continue-on-error: true
         run: |
+          set -euo pipefail
+          trap 'echo "❌ Script failed at line $LINENO with exit code $?."' ERR
+          
           echo "🔍 STEP 5: Validating REST path and parameter naming..."
 
           kebab_case_regex='^[a-z0-9]+(-[a-z0-9]+)*$'
