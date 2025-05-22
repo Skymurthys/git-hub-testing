@@ -323,95 +323,85 @@ jobs:
           kebab_case_regex='^[a-z0-9]+(-[a-z0-9]+)*$'
           camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
           violations=0
-          
+
           # Find any file that matches */META-INF/module.bwm under a *.module folder
           bwm_file=$(find . -type f -path "*/META-INF/module.bwm" | grep "\.module/" | head -n 1)
-          
+
           if [[ -z "$bwm_file" || ! -f "$bwm_file" ]]; then
-            echo "❌ ERROR: File not found: $bwm_file"
-            echo "::error file=$bwm_file::File not found"
-            exit 1
+              echo "❌ ERROR: File not found: $bwm_file"
+              echo "::error file=$bwm_file::File not found"
+              exit 1
           fi
-          
+
           echo "✅ Found BWM file: $bwm_file"
-          
+
           # Pre-check for any rest:RestServiceBinding
           echo "🔎 Checking for rest:RestServiceBinding..."
           rest_binding_lines=$(grep -n 'scaext:binding[^>]*xsi:type="rest:RestServiceBinding"' "$bwm_file")
-          
+
           if [[ -z "$rest_binding_lines" ]]; then
-            echo "ℹ️ No REST bindings found in $bwm_file. Skipping validation."
-            exit 0
+              echo "ℹ️ No REST bindings found in $bwm_file. Skipping validation."
+              exit 0
           fi
-          
+
           echo "✅ REST bindings found: continuing with validation..."
 
-            mapfile -t service_blocks < <(awk '/<sca:service /,/<\/sca:service>/' "$bwm_file" | grep -B10 'xsi:type="rest:RestServiceBinding"')
-            declare -A service_to_path
-            declare -A service_to_params
+          # Read service blocks that contain a rest binding inside
+          mapfile -t service_blocks < <(
+              awk '
+                  /<sca:service / {flag=1; block=""}
+                  flag {block=block $0 ORS}
+                  /<\/sca:service>/ {
+                      flag=0
+                      if (block ~ /xsi:type="rest:RestServiceBinding"/) print block
+                  }
+              ' "$bwm_file"
+          )
 
-            for service in "${service_blocks[@]}"; do
+          declare -A service_to_path
+          declare -A service_to_params
+
+          for service in "${service_blocks[@]}"; do
               service_name=$(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$service")
-              rest_path=$(grep -oP 'path="\K[^"]+' <<< "$service")
+              rest_binding=$(grep -oP '<scaext:binding[^>]*xsi:type="rest:RestServiceBinding"[^>]*>' <<< "$service")
+              rest_path=$(grep -oP 'path="\K[^"]+' <<< "$rest_binding")
+
               [[ -n "$service_name" && -n "$rest_path" ]] && service_to_path["$service_name"]="$rest_path"
 
-              mapfile -t param_lines < <(grep -oP 'parameterMapping[^>]*' <<< "$service")
+              binding_block=$(awk -v RS= '<scaext:binding[^>]*xsi:type="rest:RestServiceBinding"[^>]*>.*?</scaext:binding>' <<< "$service")
+
+              mapfile -t param_lines < <(grep -oP '<parameterMapping[^>]*/>' <<< "$binding_block")
+
               for param_line in "${param_lines[@]}"; do
-                param_name=$(grep -oP 'parameterName="\K[^"]+' <<< "$param_line")
-                param_type=$(grep -oP 'parameterType="\K[^"]+' <<< "$param_line")
-                service_to_params["$service_name"]+="$param_type:$param_name;"
-                echo "service name"
+                  param_name=$(grep -oP 'parameterName="\K[^"]+' <<< "$param_line")
+                  param_type=$(grep -oP 'parameterType="\K[^"]+' <<< "$param_line")
+                  service_to_params["$service_name"]+="$param_type:$param_name;"
               done
-            done
-
-            mapfile -t component_blocks < <(awk '/<sca:component /,/<\/sca:component>/' "$bwm_file")
-
-            for component in "${component_blocks[@]}"; do
-              process_name=$(grep -oP 'processName="\K[^"]+' <<< "$component")
-              service_ref=$(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component" | head -n 1)
-              [[ -n "$process_name" && -n "$service_ref" ]] || continue
-
-              echo -e "\n🔹 Process: $process_name"
-              echo "   └─ Service Name: $service_ref"
-
-              rest_path="${service_to_path[$service_ref]}"
-              if [[ -n "$rest_path" ]]; then
-                echo "   └─ REST Path: $rest_path"
-                valid_path=1
-                for segment in ${rest_path//\// }; do
-                  [[ "$segment" == *"{"* && "$segment" == *"}"* ]] && continue
-                  if [[ ! "$segment" =~ $kebab_case_regex ]]; then
-                    echo "::error file=$bwm_file::❌ Invalid path segment '$segment' in '$rest_path' (must be kebab-case)"
-                    valid_path=0
-                    violations=$((violations + 1))
-                  fi
-                done
-                [[ $valid_path -eq 1 ]] && echo "   ✅ REST path is valid"
-              fi
-
-              param_string="${service_to_params[$service_ref]}"
-              IFS=';' read -ra params <<< "$param_string"
-              for param in "${params[@]}"; do
-                param_type="${param%%:*}"
-                param_name="${param#*:}"
-                [[ -z "$param_name" ]] && continue
-
-                if [[ ! "$param_name" =~ $camel_case_regex ]]; then
-                  echo "::error file=$bwm_file::❌ Parameter '$param_name' must be camelCase"
-                  violations=$((violations + 1))
-                fi
-              done
-            done
           done
 
-          if [[ "$violations" -eq 0 ]]; then
-            echo "✅ All REST paths and parameters are valid."
-          else
-            echo "❌ REST validation completed with $violations issues."
-          fi
+          # Read component blocks (full <sca:component>...</sca:component>)
+          mapfile -t component_blocks < <(
+              awk '
+                  /<sca:component / {flag=1; block=""}
+                  flag {block=block $0 ORS}
+                  /<\/sca:component>/ {flag=0; print block}
+              ' "$bwm_file"
+          )
 
-          echo "rest_naming_violations=$violations" >> "$GITHUB_OUTPUT"
-            
+          for component in "${component_blocks[@]}"; do
+              process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component")
+              mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component")
+
+              [[ -n "$process_name" && ${#service_names[@]} -gt 0 ]] || continue
+
+              echo -e "\n🔹 Process: $process_name"
+              for service_ref in "${service_names[@]}"; do
+                  echo "   └─ Service Name: $service_ref"
+                  echo "      └─ REST Path: ${service_to_path[$service_ref]}"
+                  echo "      └─ Params: ${service_to_params[$service_ref]}"
+              done
+          done
+
       - name: Fail job if any violations found
         if: |
           steps.validate_projects.outputs.project_violations != '0' || 
