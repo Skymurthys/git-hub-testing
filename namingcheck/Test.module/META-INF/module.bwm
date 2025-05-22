@@ -50,7 +50,7 @@
     </sca:service>
   </sca:component>
   <sca:component xmi:id="_FnuB4DZNEfCjFrxKSCJiFQ" name="ComponentResource1" compositeext:version="1.0.0.qualifier">
-    <scaext:implementation xsi:type="BW:BWComponentImplementation" xmi:id="_FnuB4TZNEfCjFrxKSCJiFQ" processName="Frontend.Resource1"/>
+    <scaext:implementation xsi:type="BW:BWComponentImplementation" xmi:id="_FnuB4TZNEfCjFrxKSCJiFQ" processName="Frontend.a"/>
     <sca:service xmi:id="_Fnv3EDZNEfCjFrxKSCJiFQ" name="resource1">
       <sca:interface.wsdl xmi:id="_FnweIDZNEfCjFrxKSCJiFQ" interface="http://xmlns.example.com/20250521193836PLT#wsdl.interface(resource1)" scaext:wsdlLocation="../Processes/Frontend/Resource1.bwp"/>
     </sca:service>
