@@ -336,96 +336,27 @@ jobs:
           fi
           echo "✅ REST service bindings found. Extracting info..."
 
-          echo "DEBUG: About to extract service blocks..."
-          
-          service_blocks_raw=$(awk '
-          /<sca:service / {flag=1; block=""}
-          flag {block=block $0 ORS}
-          /<\/sca:service>/ {
-           flag=0
-           if (block ~ /xsi:type="rest:RestServiceBinding"/) print block
-          }
-          ' "$bwm_file")
-          echo "DEBUG: Extracted blocks count: $(echo "$service_blocks_raw" | grep -c '<sca:service')"
-
-
-          if [[ -z "$service_blocks_raw" ]]; then
-            echo "❌ No service blocks with REST binding found"
-            exit 1
-          fi
-
-          declare -A service_to_path
-          declare -A service_to_params
-
-          for service in "${service_blocks[@]}"; do
-            service_name=$(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$service")
-
-            # Extract binding block using perl for multiline matching
-            binding_block=$(awk '
-            BEGIN { RS="</scaext:binding>"; ORS="" }
-            /xsi:type="rest:RestServiceBinding"/ {
-            print $0 RS
-            }
-            ' <<< "$service")
-
-
-            rest_path=$(grep -oP 'path="\K[^"]+' <<< "$binding_block" || echo "")
-
-            if [[ -n "$service_name" && -n "$rest_path" ]]; then
-              service_to_path["$service_name"]="$rest_path"
-            fi
-
-            mapfile -t param_lines < <(grep -oP '<parameterMapping[^>]*/>' <<< "$binding_block")
-            for param_line in "${param_lines[@]}"; do
-              param_name=$(grep -oP 'parameterName="\K[^"]+' <<< "$param_line")
-              param_type=$(grep -oP 'parameterType="\K[^"]+' <<< "$param_line")
-              service_to_params["$service_name"]+="$param_type:$param_name; "
-            done
-          done
-          
           echo "DEBUG: Extracting component blocks..."
-          
           mapfile -t component_blocks < <(
             awk '
-              /<sca:component / {flag=1; block=""}
-              flag {block=block $0 ORS}
-              /<\/sca:component>/ {flag=0; print block}
+              BEGIN { RS="</sca:component>"; ORS=RS }
+              /<sca:component / { print }
             ' "$bwm_file"
           )
-
           echo "DEBUG: Total components found: ${#component_blocks[@]}"
-          
-          if [[ ${#component_blocks[@]} -eq 0 ]]; then
-            echo "⚠️ No <sca:component> blocks found in $bwm_file."
-            exit 1
-          fi
 
-          echo -e "\n🗂️ REST Service Summary:\n"
-          
           for component in "${component_blocks[@]}"; do
-            echo "DEBUG: Raw component block:"
-            echo "$component"
-
+            # Extract processName from <scaext:implementation ... processName="...">
             process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
-            echo "DEBUG: Extracted process_name: $process_name"
+            [[ -z "$process_name" ]] && continue
 
+            # Extract all <sca:service name="..."> blocks inside this component
             mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component" || true)
-            
-            # Only continue if we have both a process name and services
-            [[ -n "$process_name" && ${#service_names[@]} -gt 0 ]] || continue
 
-            echo "🔹 Process: $process_name"
-
-            for service_ref in "${service_names[@]}"; do
-              rest_path="${service_to_path[$service_ref]-}"
-              [ -n "$rest_path" ]] || rest_path="N/A"
-
-              params="${service_to_params[$service_ref]-}"
-              [[ -n "$params" ]] || params="None"
-
-              echo "   └─ Service: $service_ref"
-              echo "      └─ REST Path: $rest_path"
-              echo "      └─ Parameters: $params"
+            # Print process and services
+            echo "Process Name: $process_name"
+            for svc in "${service_names[@]}"; do
+              echo "  Service Name: $svc"
             done
             echo
           done
