@@ -382,7 +382,9 @@ jobs:
               service_to_params["$service_name"]+="$param_type:$param_name; "
             done
           done
-
+          
+          echo "DEBUG: Extracting component blocks..."
+          
           mapfile -t component_blocks < <(
             awk '
               /<sca:component / {flag=1; block=""}
@@ -391,39 +393,41 @@ jobs:
             ' "$bwm_file"
           )
 
-          echo -e "\n🗂️ REST Service Summary:\n"
+          echo "DEBUG: Total components found: ${#component_blocks[@]}"
           
           if [[ ${#component_blocks[@]} -eq 0 ]]; then
             echo "⚠️ No <sca:component> blocks found in $bwm_file."
+            exit 1
           fi
 
-          for component in "${component_blocks[@]}"; do
-            process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || true)
-            mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component" || true)
+          echo -e "\n🗂️ REST Service Summary:\n"
           
+          for component in "${component_blocks[@]}"; do
+            echo "DEBUG: Raw component block:"
+            echo "$component"
+
+            process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
+            echo "DEBUG: Extracted process_name: $process_name"
+
+            mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component" || true)
+            
+            # Only continue if we have both a process name and services
             [[ -n "$process_name" && ${#service_names[@]} -gt 0 ]] || continue
 
             echo "🔹 Process: $process_name"
 
-          for service_ref in "${service_names[@]}"; do
-            if [[ -v service_to_path["$service_ref"] ]]; then
-              rest_path="${service_to_path["$service_ref"]}"
-            else
-              rest_path="N/A"
-            fi
+            for service_ref in "${service_names[@]}"; do
+              rest_path="${service_to_path[$service_ref]-}"
+              [ -n "$rest_path" ]] || rest_path="N/A"
 
-            if [[ -v service_to_params["$service_ref"] ]]; then
-              params="${service_to_params["$service_ref"]}"
-            else
-              params="None"
-            fi
+              params="${service_to_params[$service_ref]-}"
+              [[ -n "$params" ]] || params="None"
 
-            echo "   └─ Service: $service_ref"
-            echo "      └─ REST Path: $rest_path"
-            echo "      └─ Parameters: $params"
-          done
-
-          echo
+              echo "   └─ Service: $service_ref"
+              echo "      └─ REST Path: $rest_path"
+              echo "      └─ Parameters: $params"
+            done
+            echo
           done
           
       - name: Fail job if any violations found
