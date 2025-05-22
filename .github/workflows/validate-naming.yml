@@ -355,19 +355,17 @@ jobs:
           # echo "DEBUG: Component Block: $component"
 
           # Extract all <sca:service name="..."> entries
-            service_names=()
-            while IFS= read -r svc; do
-              service_names+=("$svc")
-            done < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component")
-
-          # Skip if no services found
-            [[ ${#service_names[@]} -eq 0 ]] && continue
-
-            echo "Process Name: $process_name"
-            for svc in "${service_names[@]}"; do
-              echo "  Service Name: $svc"
-            done
-            echo
+          echo "$component" | awk '
+                BEGIN { RS="<"; FS=">" }
+                $1 ~ /^sca:service/ {
+                  if (match($0, /name="[^"]+"/)) {
+                    name=substr($0, RSTART+6, RLENGTH-7)
+                    print "  Service Name: " name
+                  }
+                }
+              '
+              echo
+            fi
           done
       - name: Fail job if any violations found
         if: |
