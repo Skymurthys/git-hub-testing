@@ -361,23 +361,21 @@ jobs:
             process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
             [[ -z "$process_name" ]] && continue
 
-          # Check if component contains <sca:service>
-            if echo "$component" | grep -q '<sca:service'; then
-              echo "Process Name: $process_name"
+          # Check if there are any <sca:service> blocks
+          if ! grep -q '<sca:service' <<< "$component"; then
+            continue
+          fi
 
-            # Extract service names safely (even if across lines)
-              echo "$component" | awk '
-                BEGIN { RS="<"; FS=">" }
-                $1 ~ /^sca:service/ {
-                  if (match($0, /name="[^"]+"/)) {
-                    name=substr($0, RSTART+6, RLENGTH-7)
-                    print "  Service Name: " name
-                  }
-                }
-              '
-              echo
-            fi  # ← Make sure this is aligned properly and not inside the 'then' block
+          # Extract all service names from <sca:service name="...">
+          mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component")
+
+          # Print process and its services
+          echo "Process Name: $process_name"
+          for svc in "${service_names[@]}"; do
+            echo "  Service Name: $svc"
           done
+          echo
+          
       - name: Fail job if any violations found
         if: |
           steps.validate_projects.outputs.project_violations != '0' || 
