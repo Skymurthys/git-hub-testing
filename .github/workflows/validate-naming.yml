@@ -346,19 +346,28 @@ jobs:
           echo "DEBUG: Total components found: ${#component_blocks[@]}"
 
           for component in "${component_blocks[@]}"; do
-            # Extract processName from <scaext:implementation ... processName="...">
-            process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
-            [[ -z "$process_name" ]] && continue
+            # Check if component contains <sca:service>
+            if grep -q '<sca:service[^>]*>' <<< "$component"; then
+              # Extract processName from <scaext:implementation>
+              process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
 
-            # Extract all <sca:service name="..."> blocks inside this component
-            mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component" || true)
+              # Skip if no processName
+              if [[ -z "$process_name" ]]; then
+                continue
+              fi
 
-            # Print process and services
-            echo "Process Name: $process_name"
-            for svc in "${service_names[@]}"; do
-              echo "  Service Name: $svc"
-            done
-            echo
+              echo "ProcessName: $process_name"
+
+              # Extract all <sca:service> names in this component block
+              mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component")
+
+              # Print each service name
+              for svc_name in "${service_names[@]}"; do
+                echo "  Service: $svc_name"
+              done
+
+              echo
+            fi
           done
           
       - name: Fail job if any violations found

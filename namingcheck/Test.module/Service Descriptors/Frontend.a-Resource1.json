@@ -9,6 +9,32 @@
   "basePath" : "/",
   "schemes" : [ "http" ],
   "paths" : {
+    "/resource11" : {
+      "post" : {
+        "summary" : "postResource1",
+        "description" : "postResource1",
+        "operationId" : "post-resource11",
+        "consumes" : [ "application/json" ],
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "body",
+          "in" : "body",
+          "description" : "",
+          "schema" : {
+            "type" : "string"
+          },
+          "required" : true
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "a string to be returned",
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        }
+      }
+    },
     "/resource1" : {
       "post" : {
         "summary" : "postResource1",
