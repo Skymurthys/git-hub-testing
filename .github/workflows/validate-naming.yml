@@ -369,7 +369,10 @@ jobs:
               rest_binding=$(grep -oP '<scaext:binding[^>]*xsi:type="rest:RestServiceBinding"[^>]*>' <<< "$service")
               rest_path=$(grep -oP 'path="\K[^"]+' <<< "$rest_binding")
 
-              [[ -n "$service_name" && -n "$rest_path" ]] && service_to_path["$service_name"]="$rest_path"
+          if [[ -n "$service_name" && -n "$rest_path" ]]; then
+              service_to_path["$service_name"]="$rest_path"
+          fi
+
 
               binding_block=$(awk -v RS= '<scaext:binding[^>]*xsi:type="rest:RestServiceBinding"[^>]*>.*?</scaext:binding>' <<< "$service")
 
