@@ -354,11 +354,13 @@ jobs:
             service_name=$(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$service")
 
             # Extract binding block using perl for multiline matching
-            binding_block=$(perl -0777 -ne '
-              while (/<(scaext:binding[^>]*xsi:type="rest:RestServiceBinding"[^>]*)>(.*?)<\/scaext:binding>/sg) {
-                print "<$1>$2</scaext:binding>\n";
-              }
+            binding_block=$(awk '
+            BEGIN { RS="</scaext:binding>"; ORS="" }
+            /xsi:type="rest:RestServiceBinding"/ {
+            print $0 RS
+            }
             ' <<< "$service")
+
 
             rest_path=$(grep -oP 'path="\K[^"]+' <<< "$binding_block" || echo "")
 
