@@ -318,110 +318,85 @@ jobs:
         shell: bash
         continue-on-error: true
         run: |
-          # Find any file that matches */META-INF/module.bwm under a *.module folder
-          bwm_file=$(find . -type f -path "*/META-INF/module.bwm" | grep "\.module/" | head -n 1)
-          
           echo "🔍 STEP 5: Validating REST path and parameter naming..."
-          
-          if [[ -z "$bwm_file" || ! -f "$bwm_file" ]]; then
-            echo "❌ ERROR: File not found: $bwm_file"
-            echo "::error file=$bwm_file::File not found"
-            exit 1
-          fi
-          
-          echo "✅ Found BWM file: $bwm_file"
-
-          # Pre-check for any rest:RestServiceBinding
-          echo "🔎 Checking for rest:RestServiceBinding..."
-          rest_binding_lines=$(grep -n 'scaext:binding[^>]*xsi:type="rest:RestServiceBinding"' "$bwm_file")
-          
-          if [[ -z "$rest_binding_lines" ]]; then
-            echo "ℹ️ No REST bindings found in $bwm_file. Skipping validation."
-            exit 0
-          fi
-          
-          echo "✅ REST bindings found: continuing with validation..."
 
           kebab_case_regex='^[a-z0-9]+(-[a-z0-9]+)*$'
           camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
-
           violations=0
 
-          echo "🔧 Listing process and service names..."
+          shopt -s globstar nullglob
+          for bwm_file in **/*.module/META-INF/module.bwm; do
+            echo "✅ Found BWM file: $bwm_file"
 
-          # Read and print process + service names without validating
-          mapfile -t service_blocks < <(awk '/<sca:service /,/<\/sca:service>/' "$bwm_file")          
-          
-          for service in "${service_blocks[@]}"; do
-          
-            process_name=$(grep -oP 'processName="\K[^"]+' <<< "$service")
-            [[ -n "$process_name" ]] && echo -e "\n🔹 Process: $process_name"
-            
-            service_name=$(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$service" | head -n 1)
-            [[ -n "$service_name" ]] && echo "  └─ Service Name: $service_name"
+            if ! grep -q 'xsi:type="rest:RestServiceBinding"' "$bwm_file"; then
+              echo "ℹ️ No REST bindings found in $bwm_file. Skipping..."
+              continue
+            fi
 
+            echo "🔎 Checking for rest:RestServiceBinding..."
+
+            mapfile -t service_blocks < <(awk '/<sca:service /,/<\/sca:service>/' "$bwm_file" | grep -B10 'xsi:type="rest:RestServiceBinding"')
+            declare -A service_to_path
+            declare -A service_to_params
+
+            for service in "${service_blocks[@]}"; do
+              service_name=$(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$service")
+              rest_path=$(grep -oP 'path="\K[^"]+' <<< "$service")
+              [[ -n "$service_name" && -n "$rest_path" ]] && service_to_path["$service_name"]="$rest_path"
+
+              mapfile -t param_lines < <(grep -oP 'parameterMapping[^>]*' <<< "$service")
+              for param_line in "${param_lines[@]}"; do
+                param_name=$(grep -oP 'parameterName="\K[^"]+' <<< "$param_line")
+                param_type=$(grep -oP 'parameterType="\K[^"]+' <<< "$param_line")
+                service_to_params["$service_name"]+="$param_type:$param_name;"
+              done
             done
-            
-            # Ensure the script does not fail
-            exit 0
 
-            # REST path validation
-            echo "🔧 Starting REST path and parameter validation..."
-            rest_path=$(grep -oP 'xsi:type="rest:RestServiceBinding"[^>]*path="\K[^"]+' <<< "$service")
-            rest_path_ok=true
-            if [[ -n "$rest_path" ]]; then
-              echo "  └─ REST Path: $rest_path"
-              cleaned_path=$(echo "$rest_path" | sed 's#^/##;s#/$##')
-              IFS='/' read -ra segments <<< "$cleaned_path"
-              for segment in "${segments[@]}"; do
-                [[ "$segment" =~ ^\{.*\}$ ]] && continue
-                if [[ ! "$segment" =~ $kebab_case_regex ]]; then
-                  echo "::error file=$bwm_file::Path segment '$segment' in '$rest_path' must be kebab-case"
-                  rest_path_ok=false
+            mapfile -t component_blocks < <(awk '/<sca:component /,/<\/sca:component>/' "$bwm_file")
+
+            for component in "${component_blocks[@]}"; do
+              process_name=$(grep -oP 'processName="\K[^"]+' <<< "$component")
+              service_ref=$(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component" | head -n 1)
+              [[ -n "$process_name" && -n "$service_ref" ]] || continue
+
+              echo -e "\n🔹 Process: $process_name"
+              echo "   └─ Service Name: $service_ref"
+
+              rest_path="${service_to_path[$service_ref]}"
+              if [[ -n "$rest_path" ]]; then
+                echo "   └─ REST Path: $rest_path"
+                valid_path=1
+                for segment in ${rest_path//\// }; do
+                  [[ "$segment" == *"{"* && "$segment" == *"}"* ]] && continue
+                  if [[ ! "$segment" =~ $kebab_case_regex ]]; then
+                    echo "::error file=$bwm_file::❌ Invalid path segment '$segment' in '$rest_path' (must be kebab-case)"
+                    valid_path=0
+                    violations=$((violations + 1))
+                  fi
+                done
+                [[ $valid_path -eq 1 ]] && echo "   ✅ REST path is valid"
+              fi
+
+              param_string="${service_to_params[$service_ref]}"
+              IFS=';' read -ra params <<< "$param_string"
+              for param in "${params[@]}"; do
+                param_type="${param%%:*}"
+                param_name="${param#*:}"
+                [[ -z "$param_name" ]] && continue
+
+                if [[ ! "$param_name" =~ $camel_case_regex ]]; then
+                  echo "::error file=$bwm_file::❌ Parameter '$param_name' must be camelCase"
                   violations=$((violations + 1))
                 fi
               done
-              $rest_path_ok && echo "    ✅ REST path segments valid (kebab-case)"
-            fi
-
-            # Path parameters
-            echo "  └─ Path Parameters:"
-            mapfile -t path_params < <(grep 'parameterMapping' <<< "$service" | grep 'parameterType="Path"')
-            path_params_ok=true
-            if [[ ${#path_params[@]} -gt 0 ]]; then
-              for line in "${path_params[@]}"; do
-                name=$(echo "$line" | grep -oP 'parameterName="\K[^"]+')
-                echo "     - $name"
-                if [[ ! "$name" =~ $camel_case_regex ]]; then
-                  echo "::error file=$bwm_file::Path parameter '$name' must be camelCase"
-                  path_params_ok=false
-                  violations=$((violations + 1))
-                fi
-              done
-            else
-              echo "     (none)"
-            fi
-            $path_params_ok && echo "    ✅ Path parameter names valid (camelCase)"
-
-            # Query parameters
-            echo "  └─ Query Parameters:"
-            mapfile -t query_params < <(grep 'parameterMapping' <<< "$service" | grep 'parameterType="Query"')
-            query_params_ok=true
-            if [[ ${#query_params[@]} -gt 0 ]]; then
-              for line in "${query_params[@]}"; do
-                name=$(echo "$line" | grep -oP 'parameterName="\K[^"]+')
-                echo "     - $name"
-                if [[ ! "$name" =~ $camel_case_regex ]]; then
-                  echo "::error file=$bwm_file::Query parameter '$name' must be camelCase"
-                  query_params_ok=false
-                  violations=$((violations + 1))
-                fi
-              done
-            else
-              echo "     (none)"
-            fi
-            $query_params_ok && echo "    ✅ Query parameter names valid (camelCase)"
+            done
           done
+
+          if [[ "$violations" -eq 0 ]]; then
+            echo "✅ All REST paths and parameters are valid."
+          else
+            echo "❌ REST validation completed with $violations issues."
+          fi
 
           echo "rest_naming_violations=$violations" >> "$GITHUB_OUTPUT"
             
