@@ -29,6 +29,18 @@
     </scaext:binding>
     <scact:bindingAdjunct xmi:id="_Fn0vkTZNEfCjFrxKSCJiFQ" bindingName="RestService1"/>
   </sca:service>
+  <sca:service xmi:id="_C6zy0jcVEfCHSci3KcasPg" name="resource11" promote="ComponentResource1/resource11">
+    <sca:interface.wsdl xmi:id="_C69j0jcVEfCHSci3KcasPg" interface="http://xmlns.example.com/20250521193836PLT#wsdl.interface(resource11)" scaext:wsdlLocation="../Processes/Frontend/a.bwp"/>
+    <scaext:binding xsi:type="rest:RestServiceBinding" xmi:id="_C69j0zcVEfCHSci3KcasPg" name="RestService2" path="/resource11" docBasePath="http://localhost:7777/Test.module" docResourcePath="Resource1" basePath="/" connector="test.module.Resource" structuredData="true" technologyVersion="2.0" implementation="Service Descriptors/Frontend.a-Resource1.json">
+      <operation xmi:id="_C7HU0DcVEfCHSci3KcasPg" operationName="post" nickname="post-resource11" httpMethod="POST" notes="postResource1" responseStyle="element" outputPartName="item">
+        <clientFormat>json</clientFormat>
+        <clientRequestFormat>json</clientRequestFormat>
+      </operation>
+      <parameters xmi:id="_C7nrIDcVEfCHSci3KcasPg"/>
+      <advancedConfig xmi:id="_C69j1DcVEfCHSci3KcasPg" blockingQueueSize="8192"/>
+    </scaext:binding>
+    <scact:bindingAdjunct xmi:id="_C7HU0TcVEfCHSci3KcasPg" bindingName="RestService2"/>
+  </sca:service>
   <sca:property xmi:id="_S6VuoC_jEfCmZ6HuaFp6lw" name="BW.DEPLOYMENTUNIT.TYPE" type="XMLSchema:string" scalable="true"/>
   <sca:property xmi:id="_S6ccUC_jEfCmZ6HuaFp6lw" name="BW.APPNODE.NAME" type="XMLSchema:string" scalable="true"/>
   <sca:property xmi:id="_S6eRgC_jEfCmZ6HuaFp6lw" name="BW.DEPLOYMENTUNIT.NAME" type="XMLSchema:string" scalable="true"/>
@@ -53,6 +65,9 @@
     <scaext:implementation xsi:type="BW:BWComponentImplementation" xmi:id="_FnuB4TZNEfCjFrxKSCJiFQ" processName="Frontend.a"/>
     <sca:service xmi:id="_Fnv3EDZNEfCjFrxKSCJiFQ" name="resource1">
       <sca:interface.wsdl xmi:id="_FnweIDZNEfCjFrxKSCJiFQ" interface="http://xmlns.example.com/20250521193836PLT#wsdl.interface(resource1)" scaext:wsdlLocation="../Processes/Frontend/Resource1.bwp"/>
+    </sca:service>
+    <sca:service xmi:id="_C6zy0DcVEfCHSci3KcasPg" name="resource11">
+      <sca:interface.wsdl xmi:id="_C6zy0TcVEfCHSci3KcasPg" interface="http://xmlns.example.com/20250521193836PLT#wsdl.interface(resource11)" scaext:wsdlLocation="../Processes/Frontend/a.bwp"/>
     </sca:service>
   </sca:component>
 </sca:composite>
