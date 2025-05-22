@@ -365,7 +365,7 @@ jobs:
                 }
               '
               echo
-            fi
+                  fi
           done
       - name: Fail job if any violations found
         if: |
