@@ -320,7 +320,9 @@ jobs:
         run: |
           echo "🔍 STEP 5: Validating REST path and parameter naming..."
 
-          if [[ ! -f "$bwm_file" ]]; then
+          bwm_file=$(find . -type f -path "*/META-INF/module.bwm" -path "*/.module/*" -o -path "*/.module/META-INF/module.bwm" | head -n 1)
+          
+          if [[ -z "$bwm_file" || ! -f "$bwm_file" ]]; then
             echo "❌ ERROR: File not found: $bwm_file"
             echo "::error file=$bwm_file::File not found"
             exit 1
