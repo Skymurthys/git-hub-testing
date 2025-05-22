@@ -349,6 +349,7 @@ jobs:
             # Extract processName from <scaext:implementation ... processName="...">
             process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
             [[ -z "$process_name" ]] && continue
+            echo "Process Name: $process_name"
 
           # DEBUG: Show full component block if needed
           # echo "DEBUG: Component Block: $component"
