@@ -360,6 +360,7 @@ jobs:
                 param_name=$(grep -oP 'parameterName="\K[^"]+' <<< "$param_line")
                 param_type=$(grep -oP 'parameterType="\K[^"]+' <<< "$param_line")
                 service_to_params["$service_name"]+="$param_type:$param_name;"
+                echo "service name"
               done
             done
 
