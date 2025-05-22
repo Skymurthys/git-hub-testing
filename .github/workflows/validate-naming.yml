@@ -320,7 +320,6 @@ jobs:
         run: |
           echo "🔍 STEP 5: Validating REST path and parameter naming..."
 
-          bwm_file="./namingcheck/Test.module/META-INF/module.bwm"
           if [[ ! -f "$bwm_file" ]]; then
             echo "❌ ERROR: File not found: $bwm_file"
             echo "::error file=$bwm_file::File not found"
