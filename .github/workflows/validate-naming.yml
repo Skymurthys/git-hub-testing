@@ -343,33 +343,19 @@ jobs:
               /<sca:component / { print }
             ' "$bwm_file"
           )
+
           echo "DEBUG: Total components found: ${#component_blocks[@]}"
 
           for component in "${component_blocks[@]}"; do
-            # Check if component contains <sca:service>
+            # Check if <sca:service> exists inside this component block
             if grep -q '<sca:service[^>]*>' <<< "$component"; then
-              # Extract processName from <scaext:implementation>
+              # Extract processName attribute
               process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
-
-              # Skip if no processName
-              if [[ -z "$process_name" ]]; then
-                continue
+              if [[ -n "$process_name" ]]; then
+                echo "$process_name"
               fi
-
-              echo "ProcessName: $process_name"
-
-              # Extract all <sca:service> names in this component block
-              mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component")
-
-              # Print each service name
-              for svc_name in "${service_names[@]}"; do
-                echo "  Service: $svc_name"
-              done
-
-              echo
             fi
           done
-          
       - name: Fail job if any violations found
         if: |
           steps.validate_projects.outputs.project_violations != '0' || 
