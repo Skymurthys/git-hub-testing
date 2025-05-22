@@ -361,6 +361,7 @@ jobs:
             fi
 
             # REST path validation
+            echo "🔧 Starting REST path and parameter validation..."
             rest_path=$(grep -oP 'xsi:type="rest:RestServiceBinding"[^>]*path="\K[^"]+' <<< "$service")
             rest_path_ok=true
             if [[ -n "$rest_path" ]]; then
