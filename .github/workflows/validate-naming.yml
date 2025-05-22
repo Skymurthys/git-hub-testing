@@ -337,12 +337,23 @@ jobs:
           echo "✅ REST service bindings found. Extracting info..."
 
           echo "DEBUG: Extracting component blocks..."
-          mapfile -t component_blocks < <(
-            awk '
-              BEGIN { RS="</sca:component>"; ORS=RS }
-              /<sca:component / { print }
-            ' "$bwm_file"
-          )
+          component_blocks=()
+          current_block=""
+          inside_component=0
+
+          while IFS= read -r line; do
+            if [[ "$line" =~ \<sca:component ]]; then
+              inside_component=1
+              current_block="$line"
+            elif [[ $inside_component -eq 1 ]]; then
+              current_block+=$'\n'"$line"
+              if [[ "$line" =~ \</sca:component\> ]]; then
+                component_blocks+=("$current_block")
+                inside_component=0
+              fi
+            fi
+          done < "$bwm_file"
+
           echo "DEBUG: Total components found: ${#component_blocks[@]}"
 
           for component in "${component_blocks[@]}"; do
