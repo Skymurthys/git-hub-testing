@@ -338,25 +338,21 @@ jobs:
 
           echo "DEBUG: About to extract service blocks..."
           
-          service_blocks_raw=$(awk '...' "$bwm_file")
+          service_blocks_raw=$(awk '
+          /<sca:service / {flag=1; block=""}
+          flag {block=block $0 ORS}
+          /<\/sca:service>/ {
+           flag=0
+           if (block ~ /xsi:type="rest:RestServiceBinding"/) print block
+          }
+          ' "$bwm_file")
+          echo "DEBUG: Extracted blocks count: $(echo "$service_blocks_raw" | grep -c '<sca:service')"
+
+
           if [[ -z "$service_blocks_raw" ]]; then
             echo "❌ No service blocks with REST binding found"
             exit 1
           fi
-
-          mapfile -t service_blocks <<< "$service_blocks_raw"
-
-          head -40 "$bwm_file"  # show first 40 lines of the file for quick check
-          mapfile -t service_blocks < <(
-            awk '
-              /<sca:service / {flag=1; block=""}
-              flag {block=block $0 ORS}
-              /<\/sca:service>/ {
-                flag=0
-                if (block ~ /xsi:type="rest:RestServiceBinding"/) print block
-              }
-            ' "$bwm_file" || true
-          )
 
           declare -A service_to_path
           declare -A service_to_params
