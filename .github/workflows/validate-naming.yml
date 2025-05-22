@@ -349,10 +349,9 @@ jobs:
           # Extract processName from <scaext:implementation ... processName="...">
             process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
             [[ -z "$process_name" ]] && continue
-              echo "Process Name: $process_name"
 
           # Check if component contains <sca:service>
-            if grep -q '<sca:service' <<< "$component"; then
+            if echo "$component" | grep -q '<sca:service'; then
               echo "Process Name: $process_name"
 
             # Extract service names safely (even if across lines)
