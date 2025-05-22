@@ -319,13 +319,8 @@ jobs:
         continue-on-error: true
         run: |
           echo "🔍 STEP 5: Validating REST path and parameter naming..."
-          
-          bwm_file="./namingcheck/Test.module/META-INF/module.bwm"
-          violations=0
-          path_param_violations=0
-          query_param_violations=0
-          path_format_violations=0
 
+          bwm_file="./namingcheck/Test.module/META-INF/module.bwm"
           if [[ ! -f "$bwm_file" ]]; then
             echo "❌ ERROR: File not found: $bwm_file"
             echo "::error file=$bwm_file::File not found"
@@ -336,74 +331,86 @@ jobs:
           rest_binding_lines=$(grep -n 'scaext:binding[^>]*xsi:type="rest:RestServiceBinding"' "$bwm_file")
           if [[ -z "$rest_binding_lines" ]]; then
             echo "ℹ️ No REST bindings found in $bwm_file. Skipping validation."
+            echo "rest_naming_violations=0" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           kebab_case_regex='^[a-z0-9]+(-[a-z0-9]+)*$'
           camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
 
-          echo "🔍 Found REST service bindings:"
-          echo "$rest_binding_lines"
+          violations=0
 
-          # Extract all path attributes and validate
-          mapfile -t paths < <(grep -oP 'xsi:type="rest:RestServiceBinding"[^>]*\spath="\K[^"]+' "$bwm_file")
+          mapfile -t service_blocks < <(awk '/<sca:service /,/<\/sca:service>/' "$bwm_file")
 
-          for path in "${paths[@]}"; do
-            echo "🔸 Validating path: $path"
-            cleaned_path=$(echo "$path" | sed 's#^/##;s#/$##')
-            IFS='/' read -ra segments <<< "$cleaned_path"
-            for segment in "${segments[@]}"; do
-              [[ "$segment" =~ ^\{.*\}$ ]] && continue
-              if [[ ! "$segment" =~ $kebab_case_regex ]]; then
-                echo "::error file=$bwm_file::Path segment '$segment' in '$path' must be kebab-case"
-                path_format_violations=$((path_format_violations + 1))
-              fi
-            done
+          for service in "${service_blocks[@]}"; do
+            process_name=$(grep -oP 'processName="\K[^"]+' <<< "$service")
+            [[ -n "$process_name" ]] && echo -e "\n🔹 Process: $process_name"
+
+            service_name=$(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$service" | head -n 1)
+            echo "  └─ Service Name: $service_name"
+            if [[ ! "$service_name" =~ $camel_case_regex ]]; then
+              echo "::error file=$bwm_file::Service name '$service_name' must be camelCase"
+              violations=$((violations + 1))
+            fi
+
+            # REST path validation
+            rest_path=$(grep -oP 'xsi:type="rest:RestServiceBinding"[^>]*path="\K[^"]+' <<< "$service")
+            rest_path_ok=true
+            if [[ -n "$rest_path" ]]; then
+              echo "  └─ REST Path: $rest_path"
+              cleaned_path=$(echo "$rest_path" | sed 's#^/##;s#/$##')
+              IFS='/' read -ra segments <<< "$cleaned_path"
+              for segment in "${segments[@]}"; do
+                [[ "$segment" =~ ^\{.*\}$ ]] && continue
+                if [[ ! "$segment" =~ $kebab_case_regex ]]; then
+                  echo "::error file=$bwm_file::Path segment '$segment' in '$rest_path' must be kebab-case"
+                  rest_path_ok=false
+                  violations=$((violations + 1))
+                fi
+              done
+              $rest_path_ok && echo "    ✅ REST path segments valid (kebab-case)"
+            fi
+
+            # Path parameters
+            echo "  └─ Path Parameters:"
+            mapfile -t path_params < <(grep 'parameterMapping' <<< "$service" | grep 'parameterType="Path"')
+            path_params_ok=true
+            if [[ ${#path_params[@]} -gt 0 ]]; then
+              for line in "${path_params[@]}"; do
+                name=$(echo "$line" | grep -oP 'parameterName="\K[^"]+')
+                echo "     - $name"
+                if [[ ! "$name" =~ $camel_case_regex ]]; then
+                  echo "::error file=$bwm_file::Path parameter '$name' must be camelCase"
+                  path_params_ok=false
+                  violations=$((violations + 1))
+                fi
+              done
+            else
+              echo "     (none)"
+            fi
+            $path_params_ok && echo "    ✅ Path parameter names valid (camelCase)"
+
+            # Query parameters
+            echo "  └─ Query Parameters:"
+            mapfile -t query_params < <(grep 'parameterMapping' <<< "$service" | grep 'parameterType="Query"')
+            query_params_ok=true
+            if [[ ${#query_params[@]} -gt 0 ]]; then
+              for line in "${query_params[@]}"; do
+                name=$(echo "$line" | grep -oP 'parameterName="\K[^"]+')
+                echo "     - $name"
+                if [[ ! "$name" =~ $camel_case_regex ]]; then
+                  echo "::error file=$bwm_file::Query parameter '$name' must be camelCase"
+                  query_params_ok=false
+                  violations=$((violations + 1))
+                fi
+              done
+            else
+              echo "     (none)"
+            fi
+            $query_params_ok && echo "    ✅ Query parameter names valid (camelCase)"
           done
 
-          if [[ "$path_format_violations" -eq 0 ]]; then
-            echo "✅ All REST paths passed kebab-case validation."
-          fi
-
-          echo "🔹 Validating Path Parameters..."
-          mapfile -t path_params < <(grep 'parameterMapping' "$bwm_file" | grep 'parameterType="Path"')
-          if [[ ${#path_params[@]} -gt 0 ]]; then
-            for line in "${path_params[@]}"; do
-              name=$(echo "$line" | grep -oP 'parameterName="\K[^"]+')
-              echo "- Path parameter: $name"
-              if [[ ! "$name" =~ $camel_case_regex ]]; then
-                echo "::error file=$bwm_file::Path parameter '$name' must be camelCase"
-                path_param_violations=$((path_param_violations + 1))
-              fi
-            done
-            if [[ "$path_param_violations" -eq 0 ]]; then
-              echo "✅ Path parameters passed camelCase validation."
-            fi
-          else
-            echo "ℹ️ No Path Parameters found. Skipping path parameter name validation."
-          fi
-
-          echo "🔹 Validating Query Parameters..."
-          mapfile -t query_params < <(grep 'parameterMapping' "$bwm_file" | grep 'parameterType="Query"')
-          if [[ ${#query_params[@]} -gt 0 ]]; then
-            for line in "${query_params[@]}"; do
-              name=$(echo "$line" | grep -oP 'parameterName="\K[^"]+')
-              echo "- Query parameter: $name"
-              if [[ ! "$name" =~ $camel_case_regex ]]; then
-                echo "::error file=$bwm_file::Query parameter '$name' must be camelCase"
-                query_param_violations=$((query_param_violations + 1))
-              fi
-            done
-            if [[ "$query_param_violations" -eq 0 ]]; then
-              echo "✅ Query parameters passed camelCase validation."
-            fi
-          else
-            echo "ℹ️ No Query Parameters found. Skipping query parameter name validation."
-          fi
-
-          total_violations=$((path_format_violations + path_param_violations + query_param_violations))
-          echo "rest_naming_violations=$total_violations" >> "$GITHUB_OUTPUT"
-
+          echo "rest_naming_violations=$violations" >> "$GITHUB_OUTPUT"
             
       - name: Fail job if any violations found
         if: |
