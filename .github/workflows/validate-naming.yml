@@ -375,6 +375,7 @@ jobs:
             echo "  Service Name: $svc"
           done
           echo
+          done  
           
       - name: Fail job if any violations found
         if: |
