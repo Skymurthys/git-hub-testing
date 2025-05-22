@@ -324,16 +324,16 @@ jobs:
           camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
           violations=0
 
-          shopt -s globstar nullglob
-          for bwm_file in **/*.module/META-INF/module.bwm; do
-            echo "✅ Found BWM file: $bwm_file"
-
-            if ! grep -q 'xsi:type="rest:RestServiceBinding"' "$bwm_file"; then
-              echo "ℹ️ No REST bindings found in $bwm_file. Skipping..."
-              continue
-            fi
-
-            echo "🔎 Checking for rest:RestServiceBinding..."
+          # Pre-check for any rest:RestServiceBinding
+          echo "🔎 Checking for rest:RestServiceBinding..."
+          rest_binding_lines=$(grep -n 'scaext:binding[^>]*xsi:type="rest:RestServiceBinding"' "$bwm_file")
+          
+          if [[ -z "$rest_binding_lines" ]]; then
+            echo "ℹ️ No REST bindings found in $bwm_file. Skipping validation."
+            exit 0
+          fi
+          
+          echo "✅ REST bindings found: continuing with validation..."
 
             mapfile -t service_blocks < <(awk '/<sca:service /,/<\/sca:service>/' "$bwm_file" | grep -B10 'xsi:type="rest:RestServiceBinding"')
             declare -A service_to_path
