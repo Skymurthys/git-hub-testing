@@ -318,15 +318,18 @@ jobs:
         shell: bash
         continue-on-error: true
         run: |
+          # Find any file that matches */META-INF/module.bwm under a *.module folder
+          bwm_file=$(find . -type f -path "*/META-INF/module.bwm" | grep "\.module/" | head -n 1)
+          
           echo "🔍 STEP 5: Validating REST path and parameter naming..."
-
-          bwm_file=$(find . -type f -path "*/META-INF/module.bwm" -path "*/.module/*" -o -path "*/.module/META-INF/module.bwm" | head -n 1)
           
           if [[ -z "$bwm_file" || ! -f "$bwm_file" ]]; then
             echo "❌ ERROR: File not found: $bwm_file"
             echo "::error file=$bwm_file::File not found"
             exit 1
           fi
+          
+          echo "✅ Found BWM file: $bwm_file"
 
           # Pre-check for any rest:RestServiceBinding
           if ! grep -q 'xsi:type=["'\'']rest:RestServiceBinding["'\'']' "$bwm_file"; then
