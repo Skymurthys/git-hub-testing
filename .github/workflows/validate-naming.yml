@@ -336,6 +336,17 @@ jobs:
           fi
           echo "✅ REST service bindings found. Extracting info..."
 
+          echo "DEBUG: About to extract service blocks..."
+          
+          service_blocks_raw=$(awk '...' "$bwm_file")
+          if [[ -z "$service_blocks_raw" ]]; then
+            echo "❌ No service blocks with REST binding found"
+            exit 1
+          fi
+
+          mapfile -t service_blocks <<< "$service_blocks_raw"
+
+          head -40 "$bwm_file"  # show first 40 lines of the file for quick check
           mapfile -t service_blocks < <(
             awk '
               /<sca:service / {flag=1; block=""}
@@ -344,7 +355,7 @@ jobs:
                 flag=0
                 if (block ~ /xsi:type="rest:RestServiceBinding"/) print block
               }
-            ' "$bwm_file"
+            ' "$bwm_file" || true
           )
 
           declare -A service_to_path
