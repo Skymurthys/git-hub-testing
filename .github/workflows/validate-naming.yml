@@ -328,8 +328,7 @@ jobs:
           fi
 
           # Pre-check for any rest:RestServiceBinding
-          rest_binding_lines=$(grep -n 'scaext:binding[^>]*xsi:type="rest:RestServiceBinding"' "$bwm_file")
-          if [[ -z "$rest_binding_lines" ]]; then
+          if ! grep -q 'xsi:type=["'\'']rest:RestServiceBinding["'\'']' "$bwm_file"; then
             echo "ℹ️ No REST bindings found in $bwm_file. Skipping validation."
             echo "rest_naming_violations=0" >> "$GITHUB_OUTPUT"
             exit 0
