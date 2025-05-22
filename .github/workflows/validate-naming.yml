@@ -323,7 +323,18 @@ jobs:
           kebab_case_regex='^[a-z0-9]+(-[a-z0-9]+)*$'
           camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
           violations=0
-
+          
+          # Find any file that matches */META-INF/module.bwm under a *.module folder
+          bwm_file=$(find . -type f -path "*/META-INF/module.bwm" | grep "\.module/" | head -n 1)
+          
+          if [[ -z "$bwm_file" || ! -f "$bwm_file" ]]; then
+            echo "❌ ERROR: File not found: $bwm_file"
+            echo "::error file=$bwm_file::File not found"
+            exit 1
+          fi
+          
+          echo "✅ Found BWM file: $bwm_file"
+          
           # Pre-check for any rest:RestServiceBinding
           echo "🔎 Checking for rest:RestServiceBinding..."
           rest_binding_lines=$(grep -n 'scaext:binding[^>]*xsi:type="rest:RestServiceBinding"' "$bwm_file")
