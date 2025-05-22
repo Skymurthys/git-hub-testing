@@ -392,11 +392,15 @@ jobs:
           )
 
           echo -e "\n🗂️ REST Service Summary:\n"
+          
+          if [[ ${#component_blocks[@]} -eq 0 ]]; then
+            echo "⚠️ No <sca:component> blocks found in $bwm_file."
+          fi
 
           for component in "${component_blocks[@]}"; do
             process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || true)
             mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component" || true)
-
+          
             [[ -n "$process_name" && ${#service_names[@]} -gt 0 ]] || continue
 
             echo "🔹 Process: $process_name"
