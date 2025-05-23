@@ -433,16 +433,16 @@ jobs:
                 # Extract REST path
                 path=$(grep -oP '<scaext:binding[^>]*xsi:type="rest:RestServiceBinding"[^>]*path="\K[^"]+' <<< "$top_service" || echo "null")
                 
-                # Extract parameter mappings within <parameters> blocks
-                params=$(grep -oP '<parameterMapping[^>]*parameterName="\K[^"]+[^>]*' <<< "$top_service")
+                # Extract all parameterMapping tags
+                params=$(grep -o '<parameterMapping[^>]*>' <<< "$top_service")
 
                 # Categorize parameters
                 declare -a query_params=()
                 declare -a path_params=()
 
                 while IFS= read -r line; do
-                  pname=$(grep -oP 'parameterName="\K[^"]+' <<< "$line")
-                  ptype=$(grep -oP 'parameterType="\K[^"]+' <<< "$line")
+                  pname=$(echo "$line" | sed -n 's/.*parameterName="\([^"]*\)".*/\1/p')
+                  ptype=$(echo "$line" | sed -n 's/.*parameterType="\([^"]*\)".*/\1/p')
                   [[ "$ptype" == "Query" ]] && query_params+=("$pname")
                   [[ "$ptype" == "Path" ]] && path_params+=("$pname")
                 done <<< "$params"
@@ -464,6 +464,7 @@ jobs:
                     echo "    Path  - $p"
                   done
                 fi
+
               done
             done
           done
