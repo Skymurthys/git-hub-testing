@@ -415,7 +415,7 @@ jobs:
             fi
 
             # Start capturing top-level service blocks
-            if [[ $inside_component -eq 0 && "$line" =~ \<[[:space:]]*sca:service[^>]*\> ]]; then
+            if [[ $inside_component -eq 0 && "$line" =~ \<[[:space:]]*sca:service[^]*\> ]]; then
               inside_service=1
               current_service="$line"
             elif [[ $inside_service -eq 1 ]]; then
