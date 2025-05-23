@@ -374,49 +374,62 @@ jobs:
           done
           echo
           done
-          # Extract composite block
-          composite_block=$(xmllint --xpath '/*[local-name()="composite"]' "$module_bwm_file" 2>/dev/null)
+          
+          echo "DEBUG: Extracting <composite> block..."
 
-          if [[ -n "$composite_block" ]]; then
-            for component in "${component_blocks[@]}"; do
-              process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
-              [[ -z "$process_name" ]] && continue
+          composite_block=""
+          inside_composite=0
 
-              mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component")
-            [[ ${#service_names[@]} -eq 0 ]] && continue
+          while IFS= read -r line; do
+            if [[ "$line" =~ \<[[:space:]]*sca:composite ]]; then
+              inside_composite=1
+              composite_block="$line"
+            elif [[ $inside_composite -eq 1 ]]; then
+              composite_block+=$'\n'"$line"
+              if [[ "$line" =~ \</[[:space:]]*sca:composite[[:space:]]*\> ]]; then
+                inside_composite=0
+                break
+              fi
+            fi
+          done < "$bwm_file"
 
-              echo "Process Name: $process_name"
- 
-              for svc in "${service_names[@]}"; do
-                echo "  Service Name: $svc"
-
-                # Search matching service in composite
-                 svc_block=$(grep -Poz "<sca:service[^>]*name=\"$svc\"[^>]*>.*?</sca:service>" <<< "$composite_block" | tr -d '\0')
-                [[ -z "$svc_block" ]] && continue
-
-                # Extract path from <scaext:binding>
-                path=$(grep -oP '<scaext:binding[^>]*path="\K[^"]+' <<< "$svc_block")
-                echo "    REST Path: $path"
-
-              # Extract parameter mappings
-                echo "$svc_block" | grep -Poz '<parameterMapping[^>]*>' | tr '\0' '\n' | while read -r param_line; do
-                  name=$(grep -oP 'parameterName="\K[^"]+' <<< "$param_line")
-                  type=$(grep -oP 'parameterType="\K[^"]+' <<< "$param_line")
-                  required=$(grep -oP 'required="\K[^"]+' <<< "$param_line")
-
-                  echo "      Parameter:"
-                  echo "        Name: $name"
-                  echo "        Type: $type"
-                  echo "        Required: ${required:-false}"
-
-                # Optional: Add validation for type or naming conventions here
-                done
-              done
-              echo
-            done
+          if [[ -z "$composite_block" ]]; then
+            echo "❌ No <composite> block found in $bwm_file"
+            exit 1
           fi
-          
-          
+
+          echo "✅ Composite block extracted."
+
+          # Step 2: Extract top-level <sca:service> blocks only (ignore those inside <component>)
+          top_level_services=()
+          inside_service=0
+          inside_component=0
+          current_service=""
+
+          while IFS= read -r line; do
+            # Track entry into a component to skip nested services
+            if [[ "$line" =~ \<[[:space:]]*sca:component ]]; then
+              inside_component=1
+            elif [[ "$line" =~ \</[[:space:]]*sca:component[[:space:]]*\> ]]; then
+            inside_component=0
+            fi
+
+            # Start capturing top-level service blocks
+            if [[ $inside_component -eq 0 && "$line" =~ \<[[:space:]]*sca:service[^>]*\> ]]; then
+              inside_service=1
+              current_service="$line"
+            elif [[ $inside_service -eq 1 ]]; then
+              current_service+=$'\n'"$line"
+              if [[ "$line" =~ \</[[:space:]]*sca:service[[:space:]]*\> ]]; then
+                top_level_services+=("$current_service")
+                inside_service=0
+              fi
+            fi
+          done <<< "$composite_block"
+
+          # ✅ Count and print number of services
+          echo "✅ Extracted ${#top_level_services[@]} top-level <sca:service> block(s)"
+
       - name: Fail job if any violations found
         if: |
           steps.validate_projects.outputs.project_violations != '0' || 
