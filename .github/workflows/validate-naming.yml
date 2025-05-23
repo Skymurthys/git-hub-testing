@@ -437,6 +437,19 @@ jobs:
                 echo "  Process Name : $process_name"
                 echo "  Service Name : $svc_name"
                 echo "  REST Path    : $path"
+                
+                echo "  Parameters   :"
+                param_lines=$(grep -oP '<parameterMapping[^>]*>' <<< "$top_service")
+
+                if [[ -z "$param_lines" ]]; then
+                  echo "    (none)"
+                else
+                  while read -r param; do
+                    pname=$(grep -oP 'parameterName="\K[^"]+' <<< "$param")
+                    ptype=$(grep -oP 'parameterType="\K[^"]+' <<< "$param")
+                    echo "    $ptype - $pname"
+                  done <<< "$param_lines"
+                fi
               done
             done
           done
