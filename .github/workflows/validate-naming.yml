@@ -386,34 +386,33 @@ jobs:
           current_service=""
 
           while IFS= read -r line; do
-          # Track entry into a component to skip nested services
+            # Track entry into a component to skip nested services
             if [[ "$line" =~ \<[[:space:]]*sca:component ]]; then
               inside_component=1
-            elif [[ "$line" =~ \<\/[[:space:]]*sca:component[[:space:]]*\> ]]; then
+            elif [[ "$line" =~ \</[[:space:]]*sca:component[[:space:]]*\> ]]; then
               inside_component=0
             fi
-
-            # Detect <sca:service ...> start tag (even if multiline)
-            if [[ $inside_component -eq 0 && "$line" =~ \<[[:space:]]*sca:service[^>]* ]]; then
+			
+            # Detect top-level service opening
+            if [[ $inside_component -eq 0 && $inside_service -eq 0 && "$line" =~ \<[[:space:]]*sca:service ]]; then
               inside_service=1
               current_service="$line"
-              if [[ "$line" =~ /\> ]]; then
-                top_level_services+=("$current_service")
-                inside_service=0
-              fi
-              continue
+            continue
             fi
 
-          # Accumulate service block lines
+            # Capture additional lines of a service block
             if [[ $inside_service -eq 1 ]]; then
               current_service+=$'\n'"$line"
-              if [[ "$line" =~ \<\/[[:space:]]*sca:service[[:space:]]*\> ]]; then
+
+              # Detect end of service block
+              if [[ "$line" =~ \</[[:space:]]*sca:service[[:space:]]*\> ]]; then
                 top_level_services+=("$current_service")
                 inside_service=0
+                current_service=""
               fi
             fi
           done <<< "$composite_block"
-
+          # ✅ Count and print number of top-level services
 
 
           echo "✅ Extracted ${#top_level_services[@]} top-level <sca:service> block(s)"
