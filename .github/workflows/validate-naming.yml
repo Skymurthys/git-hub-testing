@@ -439,17 +439,20 @@ jobs:
                 echo "  REST Path    : $path"
                 
                 echo "  Parameters   :"
-                param_lines=$(grep -oP '<parameterMapping[^>]*>' <<< "$top_service")
+                param_lines=$(grep -oP '<parameterMapping[^>]*/?>' <<< "$top_service" || true)
 
                 if [[ -z "$param_lines" ]]; then
                   echo "    (none)"
                 else
                   while read -r param; do
-                    pname=$(grep -oP 'parameterName="\K[^"]+' <<< "$param")
-                    ptype=$(grep -oP 'parameterType="\K[^"]+' <<< "$param")
-                    echo "    $ptype - $pname"
+                    pname=$(grep -oP 'parameterName="\K[^"]+' <<< "$param" || echo "")
+                    ptype=$(grep -oP 'parameterType="\K[^"]+' <<< "$param" || echo "")
+                    if [[ -n "$pname" && -n "$ptype" ]]; then
+                      echo "    $ptype - $pname"
+                    fi
                   done <<< "$param_lines"
                 fi
+
               done
             done
           done
