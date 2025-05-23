@@ -337,7 +337,7 @@ jobs:
           fi
           echo "✅ REST service bindings found. Extracting info..."
 
-          echo "DEBUG: Extracting component blocks..."
+          #Extracting <component> blocks..."
           component_blocks=()
           current_block=""
           inside_component=0
@@ -355,7 +355,7 @@ jobs:
             fi
           done < "$bwm_file"
 
-          echo "DEBUG: Extracting <composite> block..."
+          #Extracting <composite> block..."
           composite_block=""
           inside_composite=0
 
@@ -371,13 +371,6 @@ jobs:
               fi
             fi
           done < "$bwm_file"
-
-          if [[ -z "$composite_block" ]]; then
-            echo "❌ No <composite> block found in $bwm_file"
-            exit 1
-          fi
-
-          echo "✅ Composite block extracted."
 
           # Step 2: Extract top-level <sca:service> blocks only (ignore those inside <component>)
           top_level_services=()
@@ -414,9 +407,7 @@ jobs:
           done <<< "$composite_block"
 
           # ✅ Count and print number of top-level services
-          echo "✅ Extracted ${#top_level_services[@]} top-level <sca:service> block(s)"
-
-          echo "🔄 Matching service names from components to composite..."
+          echo "✅ Extracted ${#top_level_services[@]} service block(s)"
 
           for component in "${component_blocks[@]}"; do
             process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
