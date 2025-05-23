@@ -320,6 +320,7 @@ jobs:
         run: |
           set -euo pipefail
           trap 'echo "❌ Script failed at line $LINENO with exit code $?."' ERR
+
           echo "🔍 Searching for module.bwm file under *.module/META-INF/ ..."
           bwm_file=$(find . -type f -path "*/META-INF/module.bwm" | grep "\.module/" | head -n1)
 
@@ -354,29 +355,7 @@ jobs:
             fi
           done < "$bwm_file"
 
-          for component in "${component_blocks[@]}"; do
-          # Extract processName from <scaext:implementation ... processName="...">
-            process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
-            [[ -z "$process_name" ]] && continue
-
-          # Check if there are any <sca:service> blocks
-          if ! grep -q '<sca:service' <<< "$component"; then
-            continue
-          fi
-
-          # Extract all service names from <sca:service name="...">
-          mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component")
-
-          # Print process and its services
-          echo "Process Name: $process_name"
-          for svc in "${service_names[@]}"; do
-            echo "  Service Name: $svc"
-          done
-          echo
-          done
-          
           echo "DEBUG: Extracting <composite> block..."
-
           composite_block=""
           inside_composite=0
 
@@ -400,42 +379,58 @@ jobs:
 
           echo "✅ Composite block extracted."
 
-          # Step 2: Extract top-level <sca:service> blocks only (ignore those inside <sca:component>)
+          # Step 2: Extract top-level <sca:service> blocks only (ignore those inside <component>)
           top_level_services=()
           inside_service=0
           inside_component=0
           current_service=""
 
           while IFS= read -r line; do
-            # Detect entry into a component
             if [[ "$line" =~ \<[[:space:]]*sca:component ]]; then
               inside_component=1
             elif [[ "$line" =~ \</[[:space:]]*sca:component[[:space:]]*\> ]]; then
               inside_component=0
             fi
 
-            # Detect top-level service opening
-            if [[ $inside_component -eq 0 && $inside_service -eq 0 && "$line" =~ \<[[:space:]]*sca:service ]]; then
+            if [[ $inside_component -eq 0 && "$line" =~ \<[[:space:]]*sca:service[^>]*\> ]]; then
               inside_service=1
               current_service="$line"
-              continue
-            fi
-
-            # Capture additional lines of a service block
-            if [[ $inside_service -eq 1 ]]; then
+            elif [[ $inside_service -eq 1 ]]; then
               current_service+=$'\n'"$line"
-
-              # Detect end of service block
               if [[ "$line" =~ \</[[:space:]]*sca:service[[:space:]]*\> ]]; then
                 top_level_services+=("$current_service")
                 inside_service=0
-                current_service=""
               fi
             fi
           done <<< "$composite_block"
 
-          # ✅ Count and print number of top-level services
           echo "✅ Extracted ${#top_level_services[@]} top-level <sca:service> block(s)"
+
+          echo "🔄 Matching service names from components to composite..."
+
+          for component in "${component_blocks[@]}"; do
+            process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
+            [[ -z "$process_name" ]] && continue
+
+            mapfile -t service_names < <(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$component")
+            [[ ${#service_names[@]} -eq 0 ]] && continue
+
+            for svc_name in "${service_names[@]}"; do
+              for top_service in "${top_level_services[@]}"; do
+                match_name=$(grep -oP '<sca:service[^>]*name="\K[^"]+' <<< "$top_service" || echo "")
+                [[ "$match_name" != "$svc_name" ]] && continue
+
+                # Extract REST path
+                path=$(grep -oP '<scaext:binding[^>]*xsi:type="rest:RestServiceBinding"[^>]*path="\K[^"]+' <<< "$top_service" || echo "")
+                
+                echo "🔗 Matched:"
+                echo "  Process Name : $process_name"
+                echo "  Service Name : $svc_name"
+                echo "  REST Path    : $path"
+              done
+            done
+          done
+
 
 
       - name: Fail job if any violations found
