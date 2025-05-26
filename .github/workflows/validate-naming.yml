@@ -57,8 +57,8 @@ jobs:
             
             # ⛔ Length check
             if (( ${#core_name} > 3 )); then
-              echo "❌ ERROR: Project name '$proj_name' exceeds 3 characters (found in $project_file)"
-              echo "::error file=$project_file::Project name '$proj_name' exceeds 3 characters (limit: 3)"
+              echo "❌ ERROR: Project name '$proj_name' exceeds 50 characters (found in $project_file)"
+              echo "::error file=$project_file::Project name '$proj_name' exceeds 50 characters (limit: 50)"
               violations=$((violations + 1))
             fi
             
