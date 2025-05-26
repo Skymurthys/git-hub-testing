@@ -202,7 +202,7 @@ jobs:
             fi
 
             # ✅ GLOBAL VARIABLE (default.substvar) checks
-            mapfile -t default_substvars < <(find . -type f -path "*\.module\META-INF\default.substvar")
+            mapfile -t default_substvars < <(find . -type f -path "*/*.module/META-INF/default.substvar")
 
             echo "🔎 Found Global Variable configuration ${#default_substvars[@]} .substvar file"
 
