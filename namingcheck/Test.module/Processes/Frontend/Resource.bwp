@@ -211,7 +211,7 @@
                 <wsdl:part element="extns:server5XXError" name="serverError"/>
             </wsdl:message>
             <wsdl:portType name="resource"
-                tibex:bw.rest.apipath="/Resource/{id}"
+                tibex:bw.rest.apipath="/resource-id/{id}"
                 tibex:bw.rest.basepath="Resource"
                 tibex:bw.rest.resource="Service Descriptors/Frontend.Resource-Resource.json"
                 tibex:bw.rest.resource.source="generated" tibex:source="bw.rest.service">
