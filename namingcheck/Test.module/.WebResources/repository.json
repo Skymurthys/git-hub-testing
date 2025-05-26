@@ -16,6 +16,14 @@
         {
             "location": "Service Descriptors/Frontend.a-Resource1.json",
             "type": "generated"
+        },
+        {
+            "location": "Service Descriptors/Frontend.a-a1.json",
+            "type": "generated"
+        },
+        {
+            "location": "Service Descriptors/Frontend.a-a11.json",
+            "type": "generated"
         }
     ]
 }

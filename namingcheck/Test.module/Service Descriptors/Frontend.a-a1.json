@@ -2,18 +2,18 @@
   "swagger" : "2.0",
   "info" : {
     "version" : "1.0",
-    "title" : "Resource",
-    "description" : "Resource service"
+    "title" : "a1",
+    "description" : "Resource1 service"
   },
   "host" : "localhost:8080",
   "basePath" : "/",
   "schemes" : [ "http" ],
   "paths" : {
-    "/resource-i/{id}" : {
+    "/resource1" : {
       "post" : {
-        "summary" : "postResource",
-        "description" : "postResource",
-        "operationId" : "post-resource",
+        "summary" : "postResource1",
+        "description" : "postResource1",
+        "operationId" : "post-resource1",
         "consumes" : [ "application/json" ],
         "produces" : [ "application/json" ],
         "parameters" : [ {
@@ -23,18 +23,6 @@
           "schema" : {
             "type" : "string"
           },
-          "required" : true
-        }, {
-          "name" : "a",
-          "in" : "query",
-          "description" : "",
-          "type" : "string",
-          "required" : false
-        }, {
-          "name" : "id",
-          "in" : "path",
-          "description" : "",
-          "type" : "string",
           "required" : true
         } ],
         "responses" : {
