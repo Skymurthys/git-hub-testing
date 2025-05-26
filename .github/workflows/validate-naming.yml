@@ -280,6 +280,10 @@ jobs:
               fi
             done
           done
+          
+          if [[ "$violations" -eq 0 ]]; then
+            echo "✅ Application has all environment .substvar files"
+          fi
 
           echo "substvar_violations=$violations" >> "$GITHUB_OUTPUT"
           
@@ -406,6 +410,8 @@ jobs:
           # ✅ Count and print number of top-level services
           echo "✅ Extracted ${#top_level_services[@]} service block(s)"
 
+           violations=0  # Initialize violation counter=0
+          
           for component in "${component_blocks[@]}"; do
             process_name=$(grep -oP '<scaext:implementation[^>]*processName="\K[^"]+' <<< "$component" || echo "")
             [[ -z "$process_name" ]] && continue
@@ -432,6 +438,7 @@ jobs:
                   echo " --> ✅ valid kebab-case"
                 else
                   echo " --> ❌ NOT valid kebab-case"
+                  violations=$((violations + 1))
                 fi
 
                 echo "  Parameters   :"
@@ -449,6 +456,7 @@ jobs:
                         echo "    $ptype - $pname -->✅ valid camelCase"
                       else
                         echo "    $ptype - $pname -->❌ NOT valid camelCase"
+                        violations=$((violations + 1))
                       fi
                     fi
                   done <<< "$param_lines"
@@ -457,6 +465,13 @@ jobs:
             done
           done
 
+          if [[ "$violations" -eq 0 ]]; then
+            echo "✅ All REST paths and parameters follow naming conventions."
+          fi
+
+          # Export violations count to GitHub Actions output
+          echo "rest_naming_violations=$violations" >> "$GITHUB_OUTPUT"
+          
       - name: Fail job if any violations found
         if: |
           steps.validate_projects.outputs.project_violations != '0' || 
