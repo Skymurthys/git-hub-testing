@@ -92,7 +92,7 @@ jobs:
 
             # ✅ PROCESS FILE (.bwp) checks
             mapfile -t bwp_files < <(find . -type f -path "*/*.module/Processes/*/*.bwp")
-            echo "----------------🔎 Found ${#bwp_files[@]} Process files (.bwp)----------------"
+            echo "----------------🔎 Found ${#bwp_files[@]} process files (.bwp)----------------"
 
             bwp_violations=0
 
