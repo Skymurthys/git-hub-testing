@@ -56,7 +56,7 @@ jobs:
             fi
             
             # ⛔ Length check
-            if (( ${#core_name} > 3 )); then
+            if (( ${#core_name} > 50 )); then
               echo "❌ ERROR: Project name '$proj_name' exceeds 50 characters (found in $project_file)"
               echo "::error file=$project_file::Project name '$proj_name' exceeds 50 characters (limit: 50)"
               violations=$((violations + 1))
@@ -72,7 +72,7 @@ jobs:
           
           # ✅ Success message if no violations
           if [[ "$violations" -eq 0 ]]; then
-            echo "✅ All project names are valid (start with 'om-', are ≤ 3 chars, and in kebab-case)."
+            echo "✅ All project names are valid (start with 'om-', are ≤ 50 chars, and in kebab-case)."
           fi
 
           echo "project_violations=$violations" >> "$GITHUB_OUTPUT"
