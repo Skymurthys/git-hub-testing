@@ -257,7 +257,7 @@ jobs:
             fi
 
           # ✅ SCHEMA (.xsd) checks
-          mapfile -t xsd_files < <(find . -type f -path "*/.module/Schemas/*.xsd")
+          mapfile -t xsd_files < <(find . -type f -path "*/*.module/Schemas/*.xsd")
           echo "🔎 Found ${#xsd_files[@]} schema files (.xsd)"
 
           xsd_violations=0
