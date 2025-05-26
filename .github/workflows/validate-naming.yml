@@ -221,33 +221,33 @@ jobs:
                 continue
               fi
 
-              for name in "${names[@]}"; do
+              for full_name in "${names[@]}"; do
                 # Skip BW.* system variables
-                if [[ "$name" == BW.* ]]; then
-                  echo "ℹ️  Ignored system variable: $name"
+                if [[ "$full_name" == BW.* ]]; then
+                  echo "ℹ️  Ignored system variable: $full_name"
                   continue
                 fi
 
                 # Extract last segment after last slash
-                names="${name##*/}"
+                var_name="${full_name##*/}"
 
                 # Skip empty names
-                if [[ -z "$names" ]]; then
+                if [[ -z "$var_name" ]]; then
                   continue
                 fi
 
-                echo "🔹 Checking variable: $name"
+                echo "🔹 Checking variable: $var_name"
 
-                if [[ ! "$name" =~ $camel_case_regex ]]; then
-                  echo "❌ ERROR: Variable '$name' must be camelCase"
-                  echo "::error file=$file::Variable '$name' must be camelCase"
+                if [[ ! "$var_name" =~ $camel_case_regex ]]; then
+                  echo "❌ ERROR: Variable '$var_name' must be camelCase"
+                  echo "::error file=$file::Variable '$var_name' must be camelCase"
                   violations=$((violations + 1))
                   substvar_name_violations=$((substvar_name_violations + 1))
                 fi
 
-                if [[ "$name" =~ $special_char_regex ]]; then
-                  echo "❌ ERROR: Variable '$name' contains special characters"
-                  echo "::error file=$file::Special characters not allowed in variable name '$name'"
+                if [[ "$var_name" =~ $special_char_regex ]]; then
+                  echo "❌ ERROR: Variable '$var_name' contains special characters"
+                  echo "::error file=$file::Special characters not allowed in variable name '$var_name'"
                   violations=$((violations + 1))
                   substvar_name_violations=$((substvar_name_violations + 1))
                 fi
