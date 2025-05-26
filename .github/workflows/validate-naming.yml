@@ -330,7 +330,7 @@ jobs:
           fi
           echo "✅ Found BWM file: $bwm_file"
 
-          echo "🔎 Checking for REST service bindings in $bwm_file ..."
+          echo "🔍 STEP 5: Checking for REST service bindings in $bwm_file ..."
           if ! grep -q 'scaext:binding[^>]*xsi:type="rest:RestServiceBinding"' "$bwm_file"; then
             echo "ℹ️ No REST service bindings found. Nothing to validate."
             exit 0
