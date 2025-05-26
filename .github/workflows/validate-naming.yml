@@ -222,7 +222,7 @@ jobs:
                 echo "⚠️  No <name> elements found in $file"
                 continue
               fi
-              echo "🔹 Checking global variables"
+              echo "🔹 Checking global variables and ignored system variable"
               for full_name in "${names[@]}"; do
                 # Extract last segment after last slash
                 var_name="${full_name##*/}"
@@ -236,7 +236,6 @@ jobs:
                 
                 # Skip BW.* system variables
                 if [[ "$var_name" == BW.* ]]; then
-                  echo "ℹ️  Ignored system variable: $var_name"
                   bw_vars=$((bw_vars + 1))
                   continue
                 fi
