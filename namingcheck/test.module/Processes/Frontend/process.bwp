@@ -17,10 +17,10 @@
                 <variable>Timer</variable>
             </endingVariables>
         </task>
-        <task name="apperd_">
+        <task name="Mapperd">
             <endingVariables>
-                <variable>apperd_-input</variable>
-                <variable>apperd_</variable>
+                <variable>Mapperd-input</variable>
+                <variable>Mapperd</variable>
             </endingVariables>
         </task>
     </tibex:VariableDescriptor>
@@ -437,8 +437,8 @@
         <bpws:variable element="ns:ProcessContext"
             name="_processContext" sca-bpel:internal="true"/>
         <bpws:variable element="ns0:TimerOutputSchema" name="Timer" sca-bpel:internal="true"/>
-        <bpws:variable element="ns1:MapperInput" name="apperd_-input" sca-bpel:internal="true"/>
-        <bpws:variable element="ns1:MapperInput" name="apperd_" sca-bpel:internal="true"/>
+        <bpws:variable element="ns1:MapperInput" name="Mapperd-input" sca-bpel:internal="true"/>
+        <bpws:variable element="ns1:MapperInput" name="Mapperd" sca-bpel:internal="true"/>
     </bpws:variables>
     <bpws:extensions>
         <bpws:extension mustUnderstand="no" namespace="http://www.eclipse.org/gmf/runtime/1.0.2/notation"/>
@@ -485,8 +485,8 @@
                 </tibex:receiveEvent>
             </bpws:extensionActivity>
             <bpws:extensionActivity>
-                <tibex:activityExtension inputVariable="apperd_-input"
-                    name="apperd_" outputVariable="apperd_"
+                <tibex:activityExtension inputVariable="Mapperd-input"
+                    name="Mapperd" outputVariable="Mapperd"
                     tibex:xpdlId="9d55a805-53d7-49dc-a81b-2e107cf2f160" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions">
                     <bpws:targets>
                         <bpws:target linkName="TimerToMapper"/>
@@ -518,7 +518,7 @@
                 </tibex:activityExtension>
             </bpws:extensionActivity>
             <bpws:extensionActivity>
-                <tibex:extActivity name="CallProcess_"
+                <tibex:extActivity name="CallProcess"
                     tibex:xpdlId="d1321eff-e668-4c9a-b5a5-45b3adf544b0"
                     type="bw.generalactivities.callprocess" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions">
                     <bpws:targets>
