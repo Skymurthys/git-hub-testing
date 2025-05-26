@@ -209,6 +209,8 @@ jobs:
             gv_name_violations=0
             camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
             special_char_regex='[^a-zA-Z0-9]'
+            total_vars=0
+            bw_vars=0
 
             for file in "${default_substvars[@]}"; do
               echo "📄 Checking: $file"
@@ -222,12 +224,6 @@ jobs:
               fi
               echo "🔹 Checking global variables"
               for full_name in "${names[@]}"; do
-                # Skip BW.* system variables
-                if [[ "$full_name" == BW.* ]]; then
-                  echo "ℹ️  Ignored system variables: $full_name"
-                  continue
-                fi
-
                 # Extract last segment after last slash
                 var_name="${full_name##*/}"
 
@@ -235,7 +231,17 @@ jobs:
                 if [[ -z "$var_name" ]]; then
                   continue
                 fi
-
+                
+                total_vars=$((total_vars + 1))
+                
+                # Skip BW.* system variables
+                if [[ "$var_name" == BW.* ]]; then
+                  echo "ℹ️  Ignored system variable: $var_name"
+                  bw_vars=$((bw_vars + 1))
+                  continue
+                fi
+                
+                # Validate camelCase
                 if [[ ! "$var_name" =~ $camel_case_regex ]]; then
                   echo "❌ ERROR: Variable '$var_name' must be camelCase"
                   echo "::error file=$file::Variable '$var_name' must be camelCase"
@@ -243,6 +249,7 @@ jobs:
                   gv_name_violations=$((gv_name_violations + 1))
                 fi
 
+                # Check for special characters
                 if [[ "$var_name" =~ $special_char_regex ]]; then
                   echo "❌ ERROR: Variable '$var_name' contains special characters"
                   echo "::error file=$file::Special characters not allowed in variable name '$var_name'"
@@ -251,6 +258,10 @@ jobs:
                 fi
               done
             done
+            
+            echo "🔢 Total Variables Found: $total_vars"
+            echo "🔢 System Variables (BW.*): $bw_vars"
+            echo "🔢 User-defined Variables Checked: $((total_vars - bw_vars))"
 
             if [[ "$gv_name_violations" -eq 0 ]]; then
               echo "✅ All gloabal variable names follow camelCase and contain no special characters."
