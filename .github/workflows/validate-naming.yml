@@ -423,12 +423,20 @@ jobs:
 
                 # Extract REST path
                 path=$(grep -oP '<scaext:binding[^>]*xsi:type="rest:RestServiceBinding"[^>]*path="\K[^"]+' <<< "$top_service" || echo "null")
-                # Print matched result
+
                 echo "  ---------------------------"
                 echo "  Process Name : $process_name"
                 echo "  Service Name : $svc_name"
-                echo "  REST Path    : $path"
-                
+                echo -n "  REST Path    : $path"
+
+                # Validate kebab-case path (ignoring parameters in curly braces)
+                kebab_path=$(sed -E 's/\{[^}]+\}//g' <<< "$path")
+                if [[ "$kebab_path" =~ ^(/[a-z0-9]+(-[a-z0-9]+)*)*$ ]]; then
+                  echo " --> ✅ REST Path '$path' is valid kebab-case"
+                else
+                  echo " --> ❌ NOT valid kebab-case"
+                fi
+
                 echo "  Parameters   :"
                 param_lines=$(grep -oP '<parameterMapping[^>]*/?>' <<< "$top_service" || true)
 
@@ -439,11 +447,15 @@ jobs:
                     pname=$(grep -oP 'parameterName="\K[^"]+' <<< "$param" || echo "")
                     ptype=$(grep -oP 'parameterType="\K[^"]+' <<< "$param" || echo "")
                     if [[ -n "$pname" && -n "$ptype" ]]; then
-                      echo "    $ptype - $pname"
+                      # Validate camelCase parameter name
+                      if [[ "$pname" =~ ^[a-z]+([A-Z][a-z0-9]*)*$ ]]; then
+                        echo "    $ptype - $pname -->✅ valid camelCase"
+                      else
+                        echo "    $ptype - $pname -->❌ NOT valid camelCase"
+                      fi
                     fi
                   done <<< "$param_lines"
                 fi
-
               done
             done
           done
