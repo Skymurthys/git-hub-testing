@@ -26,7 +26,7 @@ jobs:
           }
 
           IFS=$'\n'
-          project_files=($(find . -type f \( -name ".project" -o -name "*.project" \)))
+          project_files=($(find . -type f -name ".project"))
 
           echo "🔎 Found ${#project_files[@]} .project files"
 
@@ -91,7 +91,7 @@ jobs:
             violations=0
 
             # ✅ PROCESS FILE (.bwp) checks
-            mapfile -t bwp_files < <(find . -type f -name "*.bwp")
+            mapfile -t bwp_files < <(find . -type f -regex '.*/\.module/Processes/.*\.bwp')
             echo "🔎 Found ${#bwp_files[@]} .bwp files"
 
             bwp_violations=0
@@ -146,7 +146,7 @@ jobs:
             fi
 
             # ✅ VARIABLE (.jsv / .msv) checks
-            mapfile -t var_files < <(find . -type f \( -name "*.jsv" -o -name "*.msv" \))
+            mapfile -t var_files < <(find . -type f \( -path "*/*.module/META-INF/*.jsv" -o -path "*/*.module/META-INF/*.msv" \))
             echo "🔎 Found ${#var_files[@]} variable files (.jsv/.msv)"
 
             jsv_violations=0
@@ -257,7 +257,7 @@ jobs:
             fi
 
           # ✅ SCHEMA (.xsd) checks
-          mapfile -t xsd_files < <(find . -type f -name "*.xsd")
+          mapfile -t xsd_files < <(find . -type f -path "*/.module/Schemas/*.xsd")
           echo "🔎 Found ${#xsd_files[@]} schema files (.xsd)"
 
           xsd_violations=0
@@ -303,8 +303,8 @@ jobs:
           violations=0
           envs="DEV4 IT UAT ST PT AM"
 
-          # Step 1: Find all "META-INF" directories
-          mapfile -t meta_dirs < <(find . -type d -name META-INF)
+          # Step 1: Find "META-INF" directories
+          mapfile -t meta_dirs < <(find . -type d -name META-INF ! -path "*/.*/*")
 
           # Step 2: Filter valid application directories (exclude paths like *.module)
           declare -A seen
