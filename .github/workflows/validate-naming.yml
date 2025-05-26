@@ -204,7 +204,7 @@ jobs:
             # ✅ GLOBAL VARIABLE (default.substvar) checks
             mapfile -t default_substvars < <(find . -type f -path "*/*.module/META-INF/default.substvar")
 
-            echo "🔎 Found Global Variable configuration ${#default_substvars[@]} .substvar file"
+            echo "🔎 Found Global Variable configuration ${#default_substvars[@]} default.substvar file"
 
             substvar_name_violations=0
             camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
@@ -223,8 +223,13 @@ jobs:
 
               for name in "${names[@]}"; do
                 # Skip BW.* system variables
-                if [[ "$name" == BW.* ]]; then
-                  echo "ℹ️  Ignored system variable: $name"
+                [[ "$name" == BW.* ]] && continue
+                echo "ℹ️  Ignored system variable
+				
+                # Get last part after the last slash (e.g., /a/A → A)
+                names="${name##*/}"
+				
+                if [[ -z "$names" ]]; then
                   continue
                 fi
 
