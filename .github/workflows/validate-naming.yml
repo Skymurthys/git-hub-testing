@@ -201,6 +201,58 @@ jobs:
               echo "✅ All variables in .msv files follow camelCase and contain no special characters."
             fi
 
+            # 🔍 Find all .substvar files
+            mapfile -t default_substvars < <(find . -type f -path "*/.module/META-INF/default.substvar")
+
+            echo "🔎 Found Global Variable configuration ${#default_substvars[@]} .substvar file"
+
+            substvar_name_violations=0
+            camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
+            special_char_regex='[^a-zA-Z0-9]'
+
+            for file in "${default_substvars[@]}"; do
+              echo "📄 Checking: $file"
+
+              # Extract all <name> elements
+              mapfile -t names < <(grep -oP '(?<=<name>).*?(?=</name>)' "$file")
+
+              if [[ "${#names[@]}" -eq 0 ]]; then
+                echo "⚠️  No <name> elements found in $file"
+                continue
+              fi
+
+              for name in "${names[@]}"; do
+                # Skip BW.* system variables
+                if [[ "$name" == BW.* ]]; then
+                  echo "ℹ️  Ignored system variable: $name"
+                  continue
+                fi
+
+                echo "🔹 Checking variable: $name"
+
+                if [[ ! "$name" =~ $camel_case_regex ]]; then
+                  echo "❌ ERROR: Variable '$name' must be camelCase"
+                  echo "::error file=$file::Variable '$name' must be camelCase"
+                  violations=$((violations + 1))
+                  substvar_name_violations=$((substvar_name_violations + 1))
+                fi
+
+                if [[ "$name" =~ $special_char_regex ]]; then
+                  echo "❌ ERROR: Variable '$name' contains special characters"
+                  echo "::error file=$file::Special characters not allowed in variable name '$name'"
+                  violations=$((violations + 1))
+                  substvar_name_violations=$((substvar_name_violations + 1))
+                fi
+              done
+            done
+
+            if [[ "$substvar_name_violations" -eq 0 ]]; then
+              echo "✅ All gloabal variable names follow camelCase and contain no special characters."
+            fi
+
+            # Set output for GitHub Actions
+            echo "substvar_name_violations=$substvar_name_violations" >> "$GITHUB_OUTPUT"
+
           # ✅ SCHEMA (.xsd) checks
           mapfile -t xsd_files < <(find . -type f -name "*.xsd")
           echo "🔎 Found ${#xsd_files[@]} schema files (.xsd)"
