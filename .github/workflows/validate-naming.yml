@@ -92,7 +92,7 @@ jobs:
 
             # ✅ PROCESS FILE (.bwp) checks
             mapfile -t bwp_files < <(find . -type f -path "*/*.module/Processes/*/*.bwp")
-            echo "----------------🔎 Found ${#bwp_files[@]} .bwp files----------------"
+            echo "----------------🔎 Found ${#bwp_files[@]} Process files (.bwp)----------------"
 
             bwp_violations=0
 
@@ -116,7 +116,7 @@ jobs:
               fi
 
               # ✅ ACTIVITY (task name) checks inside each .bwp
-              echo "----------------🔎 Checking activity (task) names in: $filename----------------"
+              echo "🔎 Checking activity (task) names in: $filename"
               mapfile -t tasks < <(grep -oP '<[^:>]*task\b[^>]*name="\K[^"]+' "$file")
 
               task_errors=0
