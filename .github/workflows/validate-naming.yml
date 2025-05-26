@@ -91,7 +91,7 @@ jobs:
             violations=0
 
             # ✅ PROCESS FILE (.bwp) checks
-            mapfile -t bwp_files < <(find . -type f -regex '.*/\.module/Processes/.*\.bwp')
+            mapfile -t bwp_files < <(find . -type f -path "*/*.module/Processes/*/*.bwp")
             echo "🔎 Found ${#bwp_files[@]} .bwp files"
 
             bwp_violations=0
@@ -146,7 +146,7 @@ jobs:
             fi
 
             # ✅ VARIABLE (.jsv / .msv) checks
-            mapfile -t var_files < <(find . -type f \( -path "*/*.module/META-INF/*.jsv" -o -path "*/*.module/META-INF/*.msv" \))
+            mapfile -t var_files < <(find . -type f \( -path "*/*.module/META-INF/module.jsv" -o -path "*/*.module/META-INF/module.msv" \))
             echo "🔎 Found ${#var_files[@]} variable files (.jsv/.msv)"
 
             jsv_violations=0
@@ -382,7 +382,7 @@ jobs:
         continue-on-error: false
         run: |
           echo "🔍 Searching for module.bwm file under *.module/META-INF/ ..."
-          bwm_file=$(find . -type f -path "*/META-INF/module.bwm" | grep "\.module/" | head -n1)
+          mapfile -t bwm_file < <(find . -type f -path "*/*.module/META-INF/default.substvar")
 
           if [[ -z "$bwm_file" ]]; then
             echo "❌ ERROR: No module.bwm file found under any *.module/META-INF/"
