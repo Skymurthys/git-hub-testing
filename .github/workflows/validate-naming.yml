@@ -485,4 +485,16 @@ jobs:
           steps.validate_rest_naming.outputs.rest_naming_violations != '0'
         run: |
           echo "❌ Validation errors detected. Failing the job."
+
+          echo -e "### 🚫 Validation Summary\n"
+          echo "| Step                     | Violations |"
+          echo "|--------------------------|------------|"
+          echo "| Project Name Check       | ${{ steps.validate_projects.outputs.project_violations }} |"
+          echo "| Process & Activity Names | ${{ steps.validate_processes.outputs.naming_violations }} |"
+          echo "| Substvar File Presence   | ${{ steps.validate_substvar.outputs.substvar_violations }} |"
+          echo "| Folder Structure Check   | ${{ steps.validate_process_structure.outputs.structure_violations }} |"
+          echo "| REST Path & Param Check  | ${{ steps.validate_rest_naming.outputs.rest_naming_violations }} |"
+          echo
+
           exit 1
+
