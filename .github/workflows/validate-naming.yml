@@ -382,7 +382,7 @@ jobs:
         continue-on-error: false
         run: |
           echo "🔍 Searching for module.bwm file under *.module/META-INF/ ..."
-          mapfile -t bwm_file < <(find . -type f -path "*/*.module/META-INF/default.substvar")
+          mapfile -t bwm_file < <(find . -type f -path "*/*.module/META-INF/module.bwm")
 
           if [[ -z "$bwm_file" ]]; then
             echo "❌ ERROR: No module.bwm file found under any *.module/META-INF/"
