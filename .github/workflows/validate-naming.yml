@@ -227,9 +227,11 @@ jobs:
                   echo "ℹ️  Ignored system variable: $name"
                   continue
                 fi
-				
-                # Get last part after the last slash (e.g., /a/A → A)
-                names="${name##*/}"				
+
+                # Extract last segment after last slash
+                names="${name##*/}"
+
+                # Skip empty names
                 if [[ -z "$names" ]]; then
                   continue
                 fi
