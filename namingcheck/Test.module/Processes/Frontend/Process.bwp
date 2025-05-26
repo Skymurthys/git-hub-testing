@@ -517,7 +517,7 @@
                         <bpws:target linkName="MapperdToCallProcess"/>
                     </bpws:targets>
                     <tibex:CallProcess
-                        subProcessName="Frontend.SubProcess" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions"/>
+                        subProcessName="Frontend.SubProcess_" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions"/>
                 </tibex:extActivity>
             </bpws:extensionActivity>
         </bpws:flow>
