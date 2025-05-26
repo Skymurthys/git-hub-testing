@@ -134,10 +134,8 @@ jobs:
                   task_errors=$((task_errors + 1))
                 fi
               done
-
-              if [[ ${#tasks[@]} -eq 0 ]]; then
-                echo "ℹ️ No task activities found in $filename"
-              elif [[ $task_errors -eq 0 ]]; then
+              
+              if [[ $task_errors -eq 0 ]]; then
                 echo "✅ All activity names are valid in $filename and contain no special characters."
               fi
 
@@ -151,7 +149,6 @@ jobs:
             mapfile -t var_files < <(find . -type f \( -name "*.jsv" -o -name "*.msv" \))
             echo "🔎 Found ${#var_files[@]} variable files (.jsv/.msv)"
 
-            var_violations=0
             jsv_violations=0
             msv_violations=0
 
@@ -182,7 +179,6 @@ jobs:
                   echo "❌ ERROR: Variable '$var' in $filename must be camelCase"
                   echo "::error file=$vfile::Variable '$var' must be camelCase"
                   violations=$((violations + 1))
-                  var_violations=$((var_violations + 1))
                   [[ "$var_type" == ".jsv" ]] && jsv_violations=$((jsv_violations + 1))
                   [[ "$var_type" == ".msv" ]] && msv_violations=$((msv_violations + 1))
                 fi
@@ -191,7 +187,6 @@ jobs:
                   echo "❌ ERROR: Variable '$var' in $filename contains special characters"
                   echo "::error file=$vfile::Special characters not allowed in variable name '$var'"
                   violations=$((violations + 1))
-                  var_violations=$((var_violations + 1))
                   [[ "$var_type" == ".jsv" ]] && jsv_violations=$((jsv_violations + 1))
                   [[ "$var_type" == ".msv" ]] && msv_violations=$((msv_violations + 1))
                 fi
@@ -233,6 +228,15 @@ jobs:
           if [[ "$xsd_violations" -eq 0 ]]; then
             echo "✅ All .xsd schema filenames follow camelCase and contain no special characters."
           fi
+          
+          # 🔚 Final summary for naming convention checks
+          if [[ "$violations" -eq 0 ]]; then
+            echo "✅ All naming conventions (process, activity, variable, schema) are satisfied."
+          fi
+
+          # 🔄 Export the result for GitHub Actions downstream usage
+          echo "naming_violations=$violations" >> "$GITHUB_OUTPUT"
+
 
       - name: Validate presence of .substvar files in META-INF folders for specific environments
         id: validate_substvar
@@ -475,7 +479,7 @@ jobs:
       - name: Fail job if any violations found
         if: |
           steps.validate_projects.outputs.project_violations != '0' || 
-          steps.validate_processes.outputs.process_violations != '0' || 
+          steps.validate_processes.outputs.naming_violations != '0' || 
           steps.validate_substvar.outputs.substvar_violations != '0' ||
           steps.validate_process_structure.outputs.structure_violations != '0' ||
           steps.validate_rest_naming.outputs.rest_naming_violations != '0'
