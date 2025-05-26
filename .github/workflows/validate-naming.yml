@@ -318,9 +318,6 @@ jobs:
         shell: bash
         continue-on-error: false
         run: |
-          set -euo pipefail
-          trap 'echo "❌ Script failed at line $LINENO with exit code $?."' ERR
-
           echo "🔍 Searching for module.bwm file under *.module/META-INF/ ..."
           bwm_file=$(find . -type f -path "*/META-INF/module.bwm" | grep "\.module/" | head -n1)
 
