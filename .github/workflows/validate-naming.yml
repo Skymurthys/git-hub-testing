@@ -220,11 +220,11 @@ jobs:
                 echo "⚠️  No <name> elements found in $file"
                 continue
               fi
-
+              echo "🔹 Checking global variables"
               for full_name in "${names[@]}"; do
                 # Skip BW.* system variables
                 if [[ "$full_name" == BW.* ]]; then
-                  echo "ℹ️  Ignored system variables"
+                  echo "ℹ️  Ignored system variables: $full_name"
                   continue
                 fi
 
@@ -235,8 +235,6 @@ jobs:
                 if [[ -z "$var_name" ]]; then
                   continue
                 fi
-
-                echo "🔹 Checking global variables"
 
                 if [[ ! "$var_name" =~ $camel_case_regex ]]; then
                   echo "❌ ERROR: Variable '$var_name' must be camelCase"
