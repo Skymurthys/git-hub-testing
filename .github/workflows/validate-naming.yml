@@ -504,7 +504,6 @@ jobs:
           echo "| Folder Structure Check   | $structure_violations |"
           echo "| REST Path & Param Check  | $rest_violations |"
           echo ""
-          
           exit 1
 
 
