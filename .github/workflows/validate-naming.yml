@@ -28,7 +28,7 @@ jobs:
           IFS=$'\n'
           project_files=($(find . -type f -name ".project"))
 
-          echo "🔎 Found ${#project_files[@]} .project files"
+          echo "----------------🔎 Found ${#project_files[@]} .project files----------------"
 
           for project_file in "${project_files[@]}"; do
             proj_name=$(grep -oPm1 '(?<=<name>)[^<]+' "$project_file" || echo "")
@@ -92,7 +92,7 @@ jobs:
 
             # ✅ PROCESS FILE (.bwp) checks
             mapfile -t bwp_files < <(find . -type f -path "*/*.module/Processes/*/*.bwp")
-            echo "🔎 Found ${#bwp_files[@]} .bwp files"
+            echo "----------------🔎 Found ${#bwp_files[@]} .bwp files----------------"
 
             bwp_violations=0
 
@@ -116,7 +116,7 @@ jobs:
               fi
 
               # ✅ ACTIVITY (task name) checks inside each .bwp
-              echo "🔎 Checking activity (task) names in: $filename"
+              echo "----------------🔎 Checking activity (task) names in: $filename----------------"
               mapfile -t tasks < <(grep -oP '<[^:>]*task\b[^>]*name="\K[^"]+' "$file")
 
               task_errors=0
@@ -147,7 +147,7 @@ jobs:
 
             # ✅ VARIABLE (.jsv / .msv) checks
             mapfile -t var_files < <(find . -type f \( -path "*/*.module/META-INF/module.jsv" -o -path "*/*.module/META-INF/module.msv" \))
-            echo "🔎 Found ${#var_files[@]} variable files (.jsv/.msv)"
+            echo "----------------🔎 Found ${#var_files[@]} variable files (.jsv/.msv)----------------"
 
             jsv_violations=0
             msv_violations=0
@@ -204,7 +204,7 @@ jobs:
             # ✅ GLOBAL VARIABLE (default.substvar) checks
             mapfile -t default_substvars < <(find . -type f -path "*/*.module/META-INF/default.substvar")
 
-            echo "🔎 Found Global Variable configuration in default.substvar file"
+            echo "----------------🔎 Found Global Variable configuration in default.substvar file----------------"
 
             gv_name_violations=0
             camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
@@ -268,7 +268,7 @@ jobs:
 
           # ✅ SCHEMA (.xsd) checks
           mapfile -t xsd_files < <(find . -type f -path "*/*.module/Schemas/*.xsd")
-          echo "🔎 Found ${#xsd_files[@]} schema files (.xsd)"
+          echo "----------------🔎 Found ${#xsd_files[@]} schema files (.xsd)----------------"
 
           xsd_violations=0
 
@@ -331,7 +331,7 @@ jobs:
             fi
           done
 
-          echo "🔎 Applications to validate:"
+          echo "----------------🔎 Applications to validate:----------------"
           for app in "${app_dirs[@]}"; do echo "$app"; done
 
           # Step 3: Check for each expected .substvar file
