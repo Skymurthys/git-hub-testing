@@ -204,9 +204,9 @@ jobs:
             # ✅ GLOBAL VARIABLE (default.substvar) checks
             mapfile -t default_substvars < <(find . -type f -path "*/*.module/META-INF/default.substvar")
 
-            echo "🔎 Found Global Variable configuration ${#default_substvars[@]} default.substvar file"
+            echo "🔎 Found Global Variable configuration in default.substvar file"
 
-            substvar_name_violations=0
+            gv_name_violations=0
             camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
             special_char_regex='[^a-zA-Z0-9]'
 
@@ -224,7 +224,7 @@ jobs:
               for full_name in "${names[@]}"; do
                 # Skip BW.* system variables
                 if [[ "$full_name" == BW.* ]]; then
-                  echo "ℹ️  Ignored system variable: $full_name"
+                  echo "ℹ️  Ignored system variables"
                   continue
                 fi
 
@@ -236,30 +236,27 @@ jobs:
                   continue
                 fi
 
-                echo "🔹 Checking variable: $var_name"
+                echo "🔹 Checking global variables"
 
                 if [[ ! "$var_name" =~ $camel_case_regex ]]; then
                   echo "❌ ERROR: Variable '$var_name' must be camelCase"
                   echo "::error file=$file::Variable '$var_name' must be camelCase"
                   violations=$((violations + 1))
-                  substvar_name_violations=$((substvar_name_violations + 1))
+                  gv_name_violations=$((gv_name_violations + 1))
                 fi
 
                 if [[ "$var_name" =~ $special_char_regex ]]; then
                   echo "❌ ERROR: Variable '$var_name' contains special characters"
                   echo "::error file=$file::Special characters not allowed in variable name '$var_name'"
                   violations=$((violations + 1))
-                  substvar_name_violations=$((substvar_name_violations + 1))
+                  gv_name_violations=$((gv_name_violations + 1))
                 fi
               done
             done
 
-            if [[ "$substvar_name_violations" -eq 0 ]]; then
+            if [[ "$gv_name_violations" -eq 0 ]]; then
               echo "✅ All gloabal variable names follow camelCase and contain no special characters."
             fi
-
-            # Set output for GitHub Actions
-            echo "substvar_name_violations=$substvar_name_violations" >> "$GITHUB_OUTPUT"
 
           # ✅ SCHEMA (.xsd) checks
           mapfile -t xsd_files < <(find . -type f -name "*.xsd")
