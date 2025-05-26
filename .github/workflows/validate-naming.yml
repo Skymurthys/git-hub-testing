@@ -223,12 +223,13 @@ jobs:
 
               for name in "${names[@]}"; do
                 # Skip BW.* system variables
-                [[ "$name" == BW.* ]] && continue
-                echo "ℹ️  Ignored system variable
+                if [[ "$name" == BW.* ]]; then
+                  echo "ℹ️  Ignored system variable: $name"
+                  continue
+                fi
 				
                 # Get last part after the last slash (e.g., /a/A → A)
-                names="${name##*/}"
-				
+                names="${name##*/}"				
                 if [[ -z "$names" ]]; then
                   continue
                 fi
