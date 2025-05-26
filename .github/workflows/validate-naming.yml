@@ -391,7 +391,7 @@ jobs:
         shell: bash
         continue-on-error: false
         run: |
-          echo "----------------🔍 Searching for module.bwm file under *.module/META-INF/... ----------------🔎
+          echo "🔍 Searching for module.bwm file under *.module/META-INF/ ..."
           mapfile -t bwm_file < <(find . -type f -path "*/*.module/META-INF/module.bwm")
 
           if [[ -z "$bwm_file" ]]; then
