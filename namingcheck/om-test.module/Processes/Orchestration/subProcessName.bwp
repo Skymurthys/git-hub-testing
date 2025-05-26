@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpws:process exitOnStandardFault="no" name="Frontend.subProcess"
-    suppressJoinFailure="yes"
-    targetNamespace="http://xmlns.example.com/20250520141414"
+<bpws:process exitOnStandardFault="no"
+    name="Orchestration.subProcessName" suppressJoinFailure="yes"
+    targetNamespace="http://xmlns.example.com/20250526153138"
     xmlns:bpws="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
     xmlns:info="http://www.tibco.com/bw/process/info"
     xmlns:ns="http://www.tibco.com/pe/EngineTypes"
@@ -173,7 +173,7 @@
         </schema>
     </tibex:Types>
     <tibex:ProcessInfo callable="true" createdBy="murthys"
-        createdOn="Tue May 20 14:14:14 IST 2025" description=""
+        createdOn="Mon May 26 15:31:38 IST 2025" description=""
         extraErrorVars="true" modifiers="public"
         productVersion="6.10.0 HF1 V52 2024-02-14" scalable="true"
         singleton="true" stateless="false" type="IT"/>
@@ -360,7 +360,7 @@
             <bpws:extensionActivity>
                 <tibex:receiveEvent createInstance="yes"
                     eventTimeout="0" name="Start"
-                    tibex:xpdlId="c532cf3f-237d-4e5f-821e-5b20601ec984" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions">
+                    tibex:xpdlId="9728bff3-6d66-4e53-b2d9-cc7d08b21bab" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions">
                     <bpws:sources>
                         <bpws:source linkName="StartToEnd"/>
                     </bpws:sources>
@@ -371,7 +371,7 @@
             </bpws:extensionActivity>
             <bpws:extensionActivity>
                 <tibex:activityExtension name="End"
-                    tibex:xpdlId="08e656aa-d2c2-4ba6-a067-47f1e1e7280b" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions">
+                    tibex:xpdlId="4806a7d3-3e70-4135-9d1b-a6ec403e30d2" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions">
                     <bpws:targets>
                         <bpws:target linkName="StartToEnd"/>
                     </bpws:targets>

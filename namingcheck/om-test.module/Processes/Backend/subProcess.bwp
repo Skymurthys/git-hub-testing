@@ -1,29 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpws:process exitOnStandardFault="no" name="Frontend.process"
+<bpws:process exitOnStandardFault="no" name="Backend.subProcess"
     suppressJoinFailure="yes"
-    targetNamespace="http://xmlns.example.com/20250513160756"
+    targetNamespace="http://xmlns.example.com/20250520141414"
     xmlns:bpws="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
     xmlns:info="http://www.tibco.com/bw/process/info"
     xmlns:ns="http://www.tibco.com/pe/EngineTypes"
-    xmlns:ns0="http://tns.tibco.com/bw/activity/timer/xsd/output"
-    xmlns:ns1="http://www.tibco.com/namespaces/tnt/plugins/generalactivities/mapper/1747640389720"
     xmlns:sca="http://docs.oasis-open.org/ns/opencsa/sca/200912"
     xmlns:sca-bpel="http://docs.oasis-open.org/ns/opencsa/sca-bpel/200801"
     xmlns:tibex="http://www.tibco.com/bpel/2007/extensions"
     xmlns:tibprop="http://ns.tibco.com/bw/property" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-    <tibex:VariableDescriptor type="MemorySaving">
-        <task name="Timer">
-            <endingVariables>
-                <variable>Timer</variable>
-            </endingVariables>
-        </task>
-        <task name="Mapperd">
-            <endingVariables>
-                <variable>Mapperd-input</variable>
-                <variable>Mapperd</variable>
-            </endingVariables>
-        </task>
-    </tibex:VariableDescriptor>
+    <tibex:VariableDescriptor type="MemorySaving"/>
     <tibex:Types>
         <xs:schema attributeFormDefault="unqualified"
             elementFormDefault="qualified"
@@ -185,29 +171,9 @@
             </complexType>
             <element name="DuplicateKeyException" type="tns:DuplicateKeyExceptionType"/>
         </schema>
-        <xs:schema attributeFormDefault="unqualified"
-            elementFormDefault="qualified"
-            targetNamespace="http://tns.tibco.com/bw/activity/timer/xsd/output"
-            xmlns:tns="http://tns.tibco.com/bw/activity/timer/xsd/output" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-            <xs:complexType name="TimerOutputSchemaType">
-                <xs:sequence>
-                    <xs:element form="unqualified" name="Now" type="xs:long"/>
-                    <xs:element form="unqualified" name="Hour" type="xs:int"/>
-                    <xs:element form="unqualified" name="Minute" type="xs:int"/>
-                    <xs:element form="unqualified" name="Second" type="xs:int"/>
-                    <xs:element form="unqualified" name="Week" type="xs:int"/>
-                    <xs:element form="unqualified" name="Month" type="xs:int"/>
-                    <xs:element form="unqualified" name="Year" type="xs:int"/>
-                    <xs:element form="unqualified" name="Date" type="xs:date"/>
-                    <xs:element form="unqualified" name="Time" type="xs:string"/>
-                    <xs:element form="unqualified" name="DayOfMonth" type="xs:int"/>
-                </xs:sequence>
-            </xs:complexType>
-            <xs:element name="TimerOutputSchema" type="tns:TimerOutputSchemaType"/>
-        </xs:schema>
     </tibex:Types>
-    <tibex:ProcessInfo callable="false" createdBy="murthys"
-        createdOn="Tue May 13 16:07:56 IST 2025" description=""
+    <tibex:ProcessInfo callable="true" createdBy="murthys"
+        createdOn="Tue May 20 14:14:14 IST 2025" description=""
         extraErrorVars="true" modifiers="public"
         productVersion="6.10.0 HF1 V52 2024-02-14" scalable="true"
         singleton="true" stateless="false" type="IT"/>
@@ -218,11 +184,6 @@
         xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.2/notation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <children type="2001">
             <children type="5001">
-                <element href="//0/@process"/>
-            </children>
-            <children type="3001">
-                <styles xsi:type="notation:SortingStyle"/>
-                <styles xsi:type="notation:FilteringStyle"/>
                 <element href="//0/@process"/>
             </children>
             <children type="3002">
@@ -278,8 +239,8 @@
                                     gradientEndColor="50431"
                                     gradientStartColor="16777215" xsi:type="bwnotation:BackgroundStyle"/>
                                     <element href="//0/@process/@activity/@activity/@activities.0"/>
-                                    <layoutConstraint x="28"
-                                    xsi:type="notation:Bounds" y="96"/>
+                                    <layoutConstraint x="2"
+                                    xsi:type="notation:Bounds" y="2"/>
                                     </children>
                                     <children type="4002">
                                     <children type="4017">
@@ -317,47 +278,8 @@
                                     gradientEndColor="50431"
                                     gradientStartColor="16777215" xsi:type="bwnotation:BackgroundStyle"/>
                                     <element href="//0/@process/@activity/@activity/@activities.1"/>
-                                    <layoutConstraint x="176"
-                                    xsi:type="notation:Bounds" y="96"/>
-                                    </children>
-                                    <children type="4002">
-                                    <children type="4017">
-                                    <styles
-                                    fontName="Segoe UI"
-                                    lineColor="0" xsi:type="notation:ShapeStyle"/>
-                                    <element href="//0/@process/@activity/@activity/@activities.2"/>
-                                    <layoutConstraint xsi:type="notation:Bounds"/>
-                                    </children>
-                                    <children type="4017">
-                                    <styles
-                                    fontName="Segoe UI"
-                                    lineColor="0" xsi:type="notation:ShapeStyle"/>
-                                    <element href="//0/@process/@activity/@activity/@activities.2"/>
-                                    <layoutConstraint xsi:type="notation:Bounds"/>
-                                    </children>
-                                    <children type="4017">
-                                    <styles
-                                    fontName="Segoe UI"
-                                    lineColor="0" xsi:type="notation:ShapeStyle"/>
-                                    <element href="//0/@process/@activity/@activity/@activities.2"/>
-                                    <layoutConstraint xsi:type="notation:Bounds"/>
-                                    </children>
-                                    <children type="4017">
-                                    <styles
-                                    fontName="Segoe UI"
-                                    lineColor="0" xsi:type="notation:ShapeStyle"/>
-                                    <element href="//0/@process/@activity/@activity/@activities.2"/>
-                                    <layoutConstraint xsi:type="notation:Bounds"/>
-                                    </children>
-                                    <styles fontName="Segoe UI"
-                                    lineColor="0" xsi:type="notation:ShapeStyle"/>
-                                    <styles
-                                    backgroundColor="16777215"
-                                    gradientEndColor="50431"
-                                    gradientStartColor="16777215" xsi:type="bwnotation:BackgroundStyle"/>
-                                    <element href="//0/@process/@activity/@activity/@activities.2"/>
-                                    <layoutConstraint x="314"
-                                    xsi:type="notation:Bounds" y="96"/>
+                                    <layoutConstraint x="135"
+                                    xsi:type="notation:Bounds" y="2"/>
                                     </children>
                                     <styles xsi:type="notation:DrawerStyle"/>
                                     <styles xsi:type="notation:SortingStyle"/>
@@ -371,8 +293,9 @@
                                     gradientStartColor="16777215" xsi:type="bwnotation:BackgroundStyle"/>
                                     <styles xsi:type="bwnotation:ResizingStyle"/>
                                     <element href="//0/@process/@activity/@activity"/>
-                                    <layoutConstraint height="384"
-                                    width="515" xsi:type="notation:Bounds"/>
+                                    <layoutConstraint height="108"
+                                    width="400" x="2"
+                                    xsi:type="notation:Bounds" y="2"/>
                                 </children>
                                 <styles xsi:type="notation:SortingStyle"/>
                                 <styles xsi:type="notation:FilteringStyle"/>
@@ -406,8 +329,8 @@
         <styles xsi:type="notation:DiagramStyle"/>
         <element href="//0"/>
         <edges
-            source="//@children.0/@children.4/@children.0/@children.0/@children.0/@children.0/@children.0/@children.0/@children.0"
-            target="//@children.0/@children.4/@children.0/@children.0/@children.0/@children.0/@children.0/@children.0/@children.1" type="4006">
+            source="//@children.0/@children.3/@children.0/@children.0/@children.0/@children.0/@children.0/@children.0/@children.0"
+            target="//@children.0/@children.3/@children.0/@children.0/@children.0/@children.0/@children.0/@children.0/@children.1" type="4006">
             <children type="6002">
                 <layoutConstraint xsi:type="notation:Location" y="40"/>
             </children>
@@ -416,29 +339,10 @@
             <element href="//0/@process/@activity/@activity/@links/@children.0"/>
             <bendpoints points="[0, 0, 0, 0]$[0, 0, 0, 0]" xsi:type="notation:RelativeBendpoints"/>
         </edges>
-        <edges
-            source="//@children.0/@children.4/@children.0/@children.0/@children.0/@children.0/@children.0/@children.0/@children.1"
-            target="//@children.0/@children.4/@children.0/@children.0/@children.0/@children.0/@children.0/@children.0/@children.2" type="4006">
-            <children type="6002">
-                <layoutConstraint xsi:type="notation:Location" y="40"/>
-            </children>
-            <styles lineColor="0" xsi:type="notation:ConnectorStyle"/>
-            <styles fontName="Segoe UI" xsi:type="notation:FontStyle"/>
-            <element href="//0/@process/@activity/@activity/@links/@children.1"/>
-            <bendpoints points="[0, 0, 0, 0]$[0, 0, 0, 0]" xsi:type="notation:RelativeBendpoints"/>
-        </edges>
     </notation:Diagram>
-    <tibex:NamespaceRegistry enabled="true">
-        <tibex:namespaceItem
-            namespace="http://www.tibco.com/namespaces/tnt/plugins/generalactivities/mapper/1747640389720" prefix="tns"/>
-    </tibex:NamespaceRegistry>
-    <bpws:import importType="http://www.w3.org/2001/XMLSchema" namespace="http://www.tibco.com/namespaces/tnt/plugins/generalactivities/mapper/1747640389720"/>
     <bpws:variables>
         <bpws:variable element="ns:ProcessContext"
             name="_processContext" sca-bpel:internal="true"/>
-        <bpws:variable element="ns0:TimerOutputSchema" name="Timer" sca-bpel:internal="true"/>
-        <bpws:variable element="ns1:MapperInput" name="Mapperd-input" sca-bpel:internal="true"/>
-        <bpws:variable element="ns1:MapperInput" name="Mapperd" sca-bpel:internal="true"/>
     </bpws:variables>
     <bpws:extensions>
         <bpws:extension mustUnderstand="no" namespace="http://www.eclipse.org/gmf/runtime/1.0.2/notation"/>
@@ -451,82 +355,41 @@
     <bpws:scope name="scope">
         <bpws:flow name="flow">
             <bpws:links>
-                <bpws:link name="TimerToMapper" tibex:linkType="SUCCESS"/>
-                <bpws:link name="MapperdToCallProcess" tibex:linkType="SUCCESS"/>
+                <bpws:link name="StartToEnd" tibex:linkType="SUCCESS"/>
             </bpws:links>
             <bpws:extensionActivity>
                 <tibex:receiveEvent createInstance="yes"
-                    eventTimeout="60" name="Timer"
-                    tibex:xpdlId="90fb22b7-a75e-4b54-8421-2dc54036bbcb"
-                    variable="Timer" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions">
+                    eventTimeout="0" name="Start"
+                    tibex:xpdlId="c532cf3f-237d-4e5f-821e-5b20601ec984" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions">
                     <bpws:sources>
-                        <bpws:source linkName="TimerToMapper"/>
+                        <bpws:source linkName="StartToEnd"/>
                     </bpws:sources>
                     <tibex:eventSource>
-                        <bwext:BWActivity
-                            activityTypeID="bw.generalactivities.timer"
-                            version="6.0.0.001"
-                            xmlns:activityconfig="http://tns.tibco.com/bw/model/activityconfig"
-                            xmlns:bwext="http://tns.tibco.com/bw/model/core/bwext"
-                            xmlns:generalactivities="http://ns.tibco.com/bw/palette/generalactivities" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                            <activityConfig>
-                                <properties name="config" xsi:type="activityconfig:EMFProperty">
-                                    <type href="http://ns.tibco.com/bw/palette/generalactivities#//Timer"/>
-                                    <value
-                                    endTime="2025-05-13T16:08:17.971+0530"
-                                    intervalUnit="Second"
-                                    runOnce="true"
-                                    startTime="2025-05-13T16:08:17.971+0530"
-                                    timeInterval="1" xsi:type="generalactivities:Timer"/>
-                                </properties>
-                            </activityConfig>
-                        </bwext:BWActivity>
+                        <tibex:StartEvent xmlns:tibex="http://www.tibco.com/bpel/2007/extensions"/>
                     </tibex:eventSource>
                 </tibex:receiveEvent>
             </bpws:extensionActivity>
             <bpws:extensionActivity>
-                <tibex:activityExtension inputVariable="Mapperd-input"
-                    name="Mapperd" outputVariable="Mapperd"
-                    tibex:xpdlId="9d55a805-53d7-49dc-a81b-2e107cf2f160" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions">
+                <tibex:activityExtension name="End"
+                    tibex:xpdlId="08e656aa-d2c2-4ba6-a067-47f1e1e7280b" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions">
                     <bpws:targets>
-                        <bpws:target linkName="TimerToMapper"/>
+                        <bpws:target linkName="StartToEnd"/>
                     </bpws:targets>
-                    <bpws:sources>
-                        <bpws:source linkName="MapperdToCallProcess"/>
-                    </bpws:sources>
-                    <tibex:inputBindings>
-                        <tibex:inputBinding
-                            expression="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?>&#xa;&lt;xsl:stylesheet xmlns:xsl=&quot;http://www.w3.org/1999/XSL/Transform&quot; xmlns:tns=&quot;http://www.tibco.com/namespaces/tnt/plugins/generalactivities/mapper/1747640389720&quot; version=&quot;2.0&quot;>&lt;xsl:template name=&quot;Mapper-input&quot; match=&quot;/&quot;>&lt;tns:MapperInput>&lt;primitive>&lt;xsl:value-of select=&quot;''&quot;/>&lt;/primitive>&lt;/tns:MapperInput>&lt;/xsl:template>&lt;/xsl:stylesheet>" expressionLanguage="urn:oasis:names:tc:wsbpel:2.0:sublang:xslt1.0"/>
-                    </tibex:inputBindings>
                     <tibex:config>
                         <bwext:BWActivity
-                            activityTypeID="bw.generalactivities.mapper"
-                            version="6.0.0.001"
+                            activityTypeID="bw.internal.end"
                             xmlns:activityconfig="http://tns.tibco.com/bw/model/activityconfig"
                             xmlns:bwext="http://tns.tibco.com/bw/model/core/bwext"
-                            xmlns:generalactivities="http://ns.tibco.com/bw/palette/generalactivities"
-                            xmlns:mapper_1747640389720="http://www.tibco.com/namespaces/tnt/plugins/generalactivities/mapper/1747640389720" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                            xmlns:internalactivities="http://ns.tibco.com/bw/core/internalactivity" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
                             <activityConfig>
                                 <properties name="config" xsi:type="activityconfig:EMFProperty">
-                                    <type href="http://ns.tibco.com/bw/palette/generalactivities#//Mapper"/>
-                                    <value
-                                    inputQName="mapper_1747640389720:MapperInput" xsi:type="generalactivities:Mapper"/>
+                                    <type href="http://ns.tibco.com/bw/core/internalactivity#//End"/>
+                                    <value xsi:type="internalactivities:End"/>
                                 </properties>
                             </activityConfig>
                         </bwext:BWActivity>
                     </tibex:config>
                 </tibex:activityExtension>
-            </bpws:extensionActivity>
-            <bpws:extensionActivity>
-                <tibex:extActivity name="CallProcess"
-                    tibex:xpdlId="d1321eff-e668-4c9a-b5a5-45b3adf544b0"
-                    type="bw.generalactivities.callprocess" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions">
-                    <bpws:targets>
-                        <bpws:target linkName="MapperdToCallProcess"/>
-                    </bpws:targets>
-                    <tibex:CallProcess
-                        subProcessName="Frontend.subProcess" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions"/>
-                </tibex:extActivity>
             </bpws:extensionActivity>
         </bpws:flow>
     </bpws:scope>
