@@ -432,7 +432,7 @@ jobs:
                 # Validate kebab-case path (ignoring parameters in curly braces)
                 kebab_path=$(sed -E 's/\{[^}]+\}//g' <<< "$path")
                 if [[ "$kebab_path" =~ ^(/[a-z0-9]+(-[a-z0-9]+)*)*$ ]]; then
-                  echo " --> ✅ REST Path '$path' is valid kebab-case"
+                  echo " --> ✅ valid kebab-case"
                 else
                   echo " --> ❌ NOT valid kebab-case"
                 fi
