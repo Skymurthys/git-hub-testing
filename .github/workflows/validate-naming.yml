@@ -314,21 +314,21 @@ jobs:
           envs="DEV4 UAT IT ST PT AM"
 
           # Find META-INF directory
-          mapfile -t meta_dirs < <(find . -type d -path "*/META-INF" ! -path "*/*.*/*")
+          mapfile -t meta_dir < <(find . -type d -path "*/META-INF" ! -path "*/*.*/*")
 
           violations=0
 
           # Loop through each META-INF directory found
-          for meta_dir in "${meta_dirs[@]}"; do
-            echo "📁 Checking directory: $meta_dir"
+          for meta_inf in "${meta_dir[@]}"; do
+            app_dir=$(dirname "$meta_inf")
+            echo "📦 Validating application: $app_dir"
 
             for env in $envs; do
-              file_path="$meta_dir/$env.substvar"
-              if [[ -f "$file_path" ]]; then
-                echo "✅ Found $env.substvar"
+              if find "$meta_inf" -type f -iname "$env.substvar" | grep -iq "$env.substvar"; then
+                echo "✅ Found $env.substvar in $meta_inf"
               else
-                echo "❌ Missing $env.substvar"
-                echo "::warning file=$file_path::Missing $env.substvar file"
+                echo "⚠️ Missing $env.substvar"
+                echo "::warning file=$meta_inf/$env.substvar::Missing $env.substvar file"
                 violations=$((violations + 1))
               fi
             done
