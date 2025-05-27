@@ -432,7 +432,6 @@
         <tibex:namespaceItem
             namespace="http://www.tibco.com/namespaces/tnt/plugins/generalactivities/mapper/1747640389720" prefix="tns"/>
     </tibex:NamespaceRegistry>
-    <bpws:import importType="http://www.w3.org/2001/XMLSchema" namespace="http://www.tibco.com/namespaces/tnt/plugins/generalactivities/mapper/1747640389720"/>
     <bpws:variables>
         <bpws:variable element="ns:ProcessContext"
             name="_processContext" sca-bpel:internal="true"/>
