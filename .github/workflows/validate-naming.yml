@@ -151,6 +151,8 @@ jobs:
 
             jsv_violations=0
             msv_violations=0
+            jsv_validated=0
+            msv_validated=0
 
             for vfile in "${var_files[@]}"; do
               filename=$(basename "$vfile")
@@ -164,6 +166,7 @@ jobs:
                 fi
                 vnames=$(grep -oP '<jobSharedVariable name="\K[^"]+' "$vfile" || true)
                 var_type=".jsv"
+                jsv_validated=1
               else
                 # Skip empty <moduleSharedVariables/>
                 if grep -q "<moduleSharedVariables\s*/>" "$vfile"; then
@@ -172,6 +175,7 @@ jobs:
                 fi
                 vnames=$(grep -oP '<moduleSharedVariable name="\K[^"]+' "$vfile" || true)
                 var_type=".msv"
+                msv_validated=1
               fi
 
               var_count=$(echo "$vnames" | grep -c . || true)
@@ -204,11 +208,11 @@ jobs:
               done <<< "$vnames"
             done
 
-            if [[ "$jsv_violations" -eq 0 ]]; then
+            if [[ "$jsv_validated" -eq 1 && "$jsv_violations" -eq 0 ]]; then
               echo "✅ All variables in .jsv files follow camelCase and contain no special characters."
             fi
 
-            if [[ "$msv_violations" -eq 0 ]]; then
+            if [[ "$msv_validated" -eq 1 && "$msv_violations" -eq 0 ]]; then
               echo "✅ All variables in .msv files follow camelCase and contain no special characters."
             fi
 
