@@ -222,6 +222,7 @@ jobs:
             echo "----------------🔎 Found Global Variable configuration in default.substvar file----------------"
 
             gv_name_violations=0
+            gv_validated=0
             camel_case_regex='^[a-z]+([A-Z][a-z0-9]*)*$'
             special_char_regex='[^a-zA-Z0-9]'
             total_vars=0
@@ -233,10 +234,6 @@ jobs:
               # Extract all <name> elements
               mapfile -t names < <(grep -oP '(?<=<name>).*?(?=</name>)' "$file")
 
-              if [[ "${#names[@]}" -eq 0 ]]; then
-                echo "⚠️  No <name> elements found in $file"
-                continue
-              fi
               echo "🔹 Checking global variables and ignored system variable"
               for full_name in "${names[@]}"; do
                 # Extract last segment after last slash
@@ -254,6 +251,9 @@ jobs:
                   bw_vars=$((bw_vars + 1))
                   continue
                 fi
+                
+                # Track that at least one user-defined variable was found
+                gv_validated=1
                 
                 # Validate camelCase
                 if [[ ! "$var_name" =~ $camel_case_regex ]]; then
@@ -277,7 +277,7 @@ jobs:
             echo "🔢 System Variables (BW.*): $bw_vars"
             echo "🔢 User-defined Variables Checked: $((total_vars - bw_vars))"
 
-            if [[ "$gv_name_violations" -eq 0 ]]; then
+            if [[ "$gv_validated" -eq 1 && "$gv_name_violations" -eq 0 ]]; then
               echo "✅ All gloabal variable names follow camelCase and contain no special characters."
             fi
 
