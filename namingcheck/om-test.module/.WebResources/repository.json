@@ -4,5 +4,14 @@
         "items": [],
         "url": "https://integration.cloud.tibco.com:443"
     }],
-    "resources": []
+    "resources": [
+        {
+            "location": "Service Descriptors/Frontend.Resource-Resource.json",
+            "type": "generated"
+        },
+        {
+            "location": "Service Descriptors/Frontend.Resource1-Resource1.json",
+            "type": "generated"
+        }
+    ]
 }
