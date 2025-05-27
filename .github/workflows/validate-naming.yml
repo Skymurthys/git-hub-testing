@@ -155,10 +155,21 @@ jobs:
             for vfile in "${var_files[@]}"; do
               filename=$(basename "$vfile")
 
+
               if [[ "$vfile" == *.jsv ]]; then
+                # Skip empty <jobSharedVariables/>
+                if grep -q "<jobSharedVariables\s*/>" "$vfile"; then
+                  echo "📄 No jobSharedVariables present! Skipping validation."
+                  continue
+                fi
                 vnames=$(grep -oP '<jobSharedVariable name="\K[^"]+' "$vfile" || true)
                 var_type=".jsv"
               else
+                # Skip empty <moduleSharedVariables/>
+                if grep -q "<moduleSharedVariables\s*/>" "$vfile"; then
+                  echo "📄 No moduleSharedVariables present! Skipping validation."
+                  continue
+                fi
                 vnames=$(grep -oP '<moduleSharedVariable name="\K[^"]+' "$vfile" || true)
                 var_type=".msv"
               fi
