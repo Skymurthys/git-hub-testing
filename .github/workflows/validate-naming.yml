@@ -277,13 +277,20 @@ jobs:
             echo "🔢 System Variables (BW.*): $bw_vars"
             echo "🔢 User-defined Variables Checked: $((total_vars - bw_vars))"
 
-            if [[ "$gv_validated" -eq 1 && "$gv_name_violations" -eq 0 ]]; then
-              echo "✅ All gloabal variable names follow camelCase and contain no special characters."
+            # Summary messages
+            if [[ "$gv_validated" -eq 0 ]]; then
+              echo "ℹ️  No user-defined global variables found to validate."
+            elif [[ "$gv_name_violations" -eq 0 ]]; then
+              echo "✅ All global variable names follow camelCase and contain no special characters."
             fi
 
           # ✅ SCHEMA (.xsd) checks
           mapfile -t xsd_files < <(find . -type f -path "*/*.module/Schemas/*.xsd")
-          echo "----------------🔎 Found ${#xsd_files[@]} schema files (.xsd)----------------"
+          
+          if [[ ${#xsd_files[@]} -eq 0 ]]; then
+            echo "ℹ️  No .xsd schema files found. Skipping schema validation."
+          else
+            echo "----------------🔎 Found ${#xsd_files[@]} schema files (.xsd)----------------"
 
           xsd_violations=0
 
