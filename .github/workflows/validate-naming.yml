@@ -288,7 +288,7 @@ jobs:
           mapfile -t xsd_files < <(find . -type f -path "*/*.module/Schemas/*.xsd")
           
           if [[ ${#xsd_files[@]} -eq 0 ]]; then
-            echo "ℹ️  No .xsd schema files found. Skipping schema validation."
+            echo "----------------ℹ️  No .xsd schema files found. Skipping schema validation----------------"
           else
             echo "----------------🔎 Found ${#xsd_files[@]} schema files (.xsd)----------------"
 
