@@ -17,10 +17,10 @@
                 <variable>Timer</variable>
             </endingVariables>
         </task>
-        <task name="Mapperd">
+        <task name="_apperd">
             <endingVariables>
-                <variable>Mapperd-input</variable>
-                <variable>Mapperd</variable>
+                <variable>_apperd-input</variable>
+                <variable>_apperd</variable>
             </endingVariables>
         </task>
     </tibex:VariableDescriptor>
@@ -437,8 +437,8 @@
         <bpws:variable element="ns:ProcessContext"
             name="_processContext" sca-bpel:internal="true"/>
         <bpws:variable element="ns0:TimerOutputSchema" name="Timer" sca-bpel:internal="true"/>
-        <bpws:variable element="ns1:MapperInput" name="Mapperd-input" sca-bpel:internal="true"/>
-        <bpws:variable element="ns1:MapperInput" name="Mapperd" sca-bpel:internal="true"/>
+        <bpws:variable element="ns1:MapperInput" name="_apperd-input" sca-bpel:internal="true"/>
+        <bpws:variable element="ns1:MapperInput" name="_apperd" sca-bpel:internal="true"/>
     </bpws:variables>
     <bpws:extensions>
         <bpws:extension mustUnderstand="no" namespace="http://www.eclipse.org/gmf/runtime/1.0.2/notation"/>
@@ -485,8 +485,8 @@
                 </tibex:receiveEvent>
             </bpws:extensionActivity>
             <bpws:extensionActivity>
-                <tibex:activityExtension inputVariable="Mapperd-input"
-                    name="Mapperd" outputVariable="Mapperd"
+                <tibex:activityExtension inputVariable="_apperd-input"
+                    name="_apperd" outputVariable="_apperd"
                     tibex:xpdlId="9d55a805-53d7-49dc-a81b-2e107cf2f160" xmlns:tibex="http://www.tibco.com/bpel/2007/extensions">
                     <bpws:targets>
                         <bpws:target linkName="TimerToMapper"/>
