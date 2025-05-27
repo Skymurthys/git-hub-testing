@@ -312,8 +312,9 @@ jobs:
             fi
           done
 
-          if [[ "$xsd_violations" -eq 0 ]]; then
-            echo "✅ All .xsd schema filenames follow camelCase and contain no special characters."
+            if [[ "$xsd_violations" -eq 0 ]]; then
+              echo "✅ All .xsd schema filenames follow camelCase and contain no special characters."
+            fi
           fi
           
           # 🔚 Final summary for naming convention checks
