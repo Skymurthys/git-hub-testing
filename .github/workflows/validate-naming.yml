@@ -122,13 +122,13 @@ jobs:
               task_errors=0
               for task in "${tasks[@]}"; do
                 if [[ ! "$task" =~ $pascal_case_regex ]]; then
-                  echo "❌ ERROR: Activity name '$task' in $filename must be PascalCase"
+                  echo "⚠️ ERROR: Activity name '$task' in $filename must be PascalCase"
                   echo "::error file=$file::Activity name '$task' must be PascalCase"
                   violations=$((violations + 1))
                   task_errors=$((task_errors + 1))
                 fi
                 if [[ "$task" =~ $special_char_regex ]]; then
-                  echo "❌ ERROR: Activity name '$task' contains special characters"
+                  echo "⚠️ ERROR: Activity name '$task' contains special characters"
                   echo "::error file=$file::Special characters not allowed in activity name '$task'"
                   violations=$((violations + 1))
                   task_errors=$((task_errors + 1))
