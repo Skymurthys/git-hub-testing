@@ -82,23 +82,5 @@
 			<isOverride>false</isOverride>
 			<useLookupValue>false</useLookupValue>
 		</globalVariable>
-		<globalVariable>
-			<name>NewProperty</name>
-			<value>kjh</value>
-			<deploymentSettable>false</deploymentSettable>
-			<serviceSettable>false</serviceSettable>
-			<type>String</type>
-			<isOverride>false</isOverride>
-			<useLookupValue>false</useLookupValue>
-		</globalVariable>
-		<globalVariable>
-			<name>/a/customerId</name>
-			<value>4</value>
-			<deploymentSettable>false</deploymentSettable>
-			<serviceSettable>false</serviceSettable>
-			<type>Integer</type>
-			<isOverride>false</isOverride>
-			<useLookupValue>false</useLookupValue>
-		</globalVariable>
 	</globalVariables>
 </repository>
