@@ -18,7 +18,7 @@ import java.util.List;
 
 @Rule(
     key = SchemaFilenameValidationCheck.RULE_KEY,
-    name = "Schema Filename Convention Validation",
+    name = "Schema Filename Validation Check",
     description = "This rule ensures the naming convention for XSD file names",
     priority = Priority.MINOR
 )
