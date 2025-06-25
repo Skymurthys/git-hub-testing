@@ -19,7 +19,7 @@ import java.util.List;
 @Rule(
     key = SchemaFilenameValidationCheck.RULE_KEY,
     name = "Schema Filename Convention Validation",
-    description = "Ensure .xsd files follow camelCase naming without special characters",
+    description = "This rule ensures the naming convention for XSD file names",
     priority = Priority.MINOR
 )
 @BelongsToProfile(title = BWProcessQualityProfile.PROFILE_NAME, priority = Priority.MINOR)
@@ -31,7 +31,7 @@ public class SchemaFilenameValidationCheck extends AbstractProjectCheck {
 
     @RuleProperty(
         key = "schemaFilenamePattern",
-        description = "Regex pattern for valid .xsd filenames (camelCase, no special characters)",
+        description = "Regular expression that .xsd filenames should follow",
         defaultValue = "^[a-z]+([A-Z][a-z0-9]+)*\\.xsd$",
         type = "TEXT"
     )
@@ -45,7 +45,6 @@ public class SchemaFilenameValidationCheck extends AbstractProjectCheck {
         File schemasDir = new File(moduleDir, "Schemas");
 
         if (!schemasDir.exists() || !schemasDir.isDirectory()) {
-            reportIssueOnFile("Schemas folder not found in module: " + moduleDir.getAbsolutePath());
             return;
         }
 

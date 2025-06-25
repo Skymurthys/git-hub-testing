@@ -33,7 +33,7 @@ public class VariableNamingConventionCheck extends AbstractProjectCheck {
 
     @RuleProperty(
         key = "variableNamePattern",
-        description = "Regex pattern for variable naming convention",
+        description = "Regular expression for variable naming convention",
         defaultValue = "^[a-z]+([A-Z][a-z0-9]+)*$",
         type = "TEXT"
     )

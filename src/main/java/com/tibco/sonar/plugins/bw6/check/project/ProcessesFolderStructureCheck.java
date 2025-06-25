@@ -28,7 +28,7 @@ public class ProcessesFolderStructureCheck extends AbstractProjectCheck {
 
     @RuleProperty(
         key = "expectedSubfolders",
-        description = "Comma-separated list of mandatory subfolders under 'Processes' (e.g., FrontEnd,BackEnd,Orchestration)",
+        description = "List of mandatory subfolders under 'Processes'",
         defaultValue = "FrontEnd,BackEnd,Orchestration",
         type = "TEXT"
     )
