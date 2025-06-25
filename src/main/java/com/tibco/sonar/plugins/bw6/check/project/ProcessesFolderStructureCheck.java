@@ -16,7 +16,7 @@ import java.util.*;
 
 @Rule(
     key = ProcessesFolderStructureCheck.RULE_KEY,
-    name = "Validate Processes Folder Structure",
+    name = "Processes Folder Structure Check",
     description = "Ensures Processes folder contains required subfolders and no .bwp files directly inside",
     priority = Priority.MINOR
 )
