@@ -34,7 +34,7 @@ public class ProjectNameValidationCheck extends AbstractProjectCheck {
     @RuleProperty(
             key = "projectNamePattern",
             description = "Regular Expression the project name should match",
-            defaultValue = "^om-([A-Z][a-z0-9]+)+$",
+            defaultValue = "^(om|il)-([A-Z][a-z0-9]+)+$",
             type = "TEXT"
     )
     protected String projectNamePattern;
