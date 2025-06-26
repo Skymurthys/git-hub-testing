@@ -20,21 +20,21 @@ import java.io.FileInputStream;
 import java.util.*;
 
 @Rule(
-        key = DEV4SubstvarValidationCheck.RULE_KEY,
-        name = "Validate DEV4.substvar Variable Values with predefined_DEV4.substvar",
-        description = "Compares values of matching global variables between DEV4.substvar and predefined_DEV4.substvar",
+        key = PTSubstvarValidationCheck.RULE_KEY,
+        name = "Validate PT.substvar Variable Values with predefined_PT.substvar",
+        description = "Compares values of matching global variables between PT.substvar and predefined_PT.substvar",
         priority = Priority.CRITICAL
 )
 @BelongsToProfile(title = BWProcessQualityProfile.PROFILE_NAME, priority = Priority.CRITICAL)
-public class DEV4SubstvarValidationCheck extends AbstractProjectCheck {
+public class PTSubstvarValidationCheck extends AbstractProjectCheck {
 
-    public static final String RULE_KEY = "DEV4SubstvarValidation";
-    private static final Logger LOG = LoggerFactory.getLogger(DEV4SubstvarValidationCheck.class);
+    public static final String RULE_KEY = "PTSubstvarValidation";
+    private static final Logger LOG = LoggerFactory.getLogger(PTSubstvarValidationCheck.class);
 
     @RuleProperty(
             key = "predefinedSubstvarPath",
-            description = "Path to predefined_DEV4.substvar file",
-            defaultValue = "C:/Workspace_BW6/dev_branch/copernico_sonar/predefined_DEV4.substvar",
+            description = "Path to predefined_PT.substvar file",
+            defaultValue = "C:/Workspace_BW6/dev_branch/copernico_sonar/predefined_PT.substvar",
             type = "TEXT"
     )
     protected String predefinedSubstvarPath;
@@ -53,33 +53,33 @@ public class DEV4SubstvarValidationCheck extends AbstractProjectCheck {
 			if (name.endsWith(".module") || name.endsWith(".parent")) continue;
 
 			File metaInfDir = new File(sibling, "META-INF");
-			File DEV4File = findFile(metaInfDir, "DEV4.substvar");
+			File PTFile = findFile(metaInfDir, "PT.substvar");
 
-			if (DEV4File != null) {
-				validateAgainstPredefined(DEV4File);
+			if (PTFile != null) {
+				validateAgainstPredefined(PTFile);
 				return;
 			}
 		}
 		
-		reportIssueOnFile("Missing DEV4.substvar in application folder");
+		reportIssueOnFile("Missing PT.substvar in application folder");
 	}
 
-	private void validateAgainstPredefined(File DEV4File) {
+	private void validateAgainstPredefined(File PTFile) {
 		File predefinedFile = new File(predefinedSubstvarPath);
 		if (!predefinedFile.exists() || !predefinedFile.isFile() || !predefinedFile.canRead()) {
-			reportIssueOnFile("Invalid predefined_DEV4.substvar file: " + predefinedSubstvarPath);
+			reportIssueOnFile("Invalid predefined_PT.substvar file: " + predefinedSubstvarPath);
 			return;
 		}
 
-		Map<String, String> DEV4Vars = parseGlobalVariables(DEV4File);
+		Map<String, String> PTVars = parseGlobalVariables(PTFile);
 		Map<String, String> predefinedVars = parseGlobalVariables(predefinedFile);
 
 		for (Map.Entry<String, String> entry : predefinedVars.entrySet()) {
 			String varName = entry.getKey();
 			String expectedValue = entry.getValue();
 
-			if (DEV4Vars.containsKey(varName)) {
-				String actualValue = DEV4Vars.get(varName);
+			if (PTVars.containsKey(varName)) {
+				String actualValue = PTVars.get(varName);
 				if (!Objects.equals(expectedValue, actualValue)) {
 					reportIssueOnFile("Variable '" + varName + "' mismatch. Expected: '" + expectedValue + "', Found: '" + actualValue + "'");
 				}
