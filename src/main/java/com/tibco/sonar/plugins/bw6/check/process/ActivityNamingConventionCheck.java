@@ -48,10 +48,7 @@ public class ActivityNamingConventionCheck extends AbstractProcessCheck {
             LOG.debug("Checking activity name: " + activityName);
 
             if (!activityName.matches(activityNamePattern)) {
-                reportIssueOnFile(
-                    "Activity name '" + activityName +
-                    "' does not follow the naming convention: " + activityNamePattern
-                );
+                reportIssueOnFile("Activity name '" + activityName + "' does not follow the PascalCase pattern ["+activityNamePattern+"]" );
             }
         }
 

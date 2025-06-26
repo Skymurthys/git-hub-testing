@@ -97,7 +97,7 @@ public class VariableNamingConventionCheck extends AbstractProjectCheck {
 
             if (!invalidVars.isEmpty()) {
                 for (String var : invalidVars) {
-                    reportIssueOnFile("Invalid variable name '" + var + "' in " + file.getName() + ". Must follow the pattern: " + variableNamePattern);
+                    reportIssueOnFile("Invalid variable name '" + var + "' in " + file.getName() + ". Must follow the camelCase pattern ["+variableNamePattern+"]");
                 }
             }
         } catch (Exception e) {

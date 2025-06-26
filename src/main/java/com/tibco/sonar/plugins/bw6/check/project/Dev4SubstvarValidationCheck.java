@@ -21,20 +21,20 @@ import java.util.*;
 
 @Rule(
         key = Dev4SubstvarValidationCheck.RULE_KEY,
-        name = "Validate dev4.substvar Variable Values with predefined_dev4.substvar",
-        description = "Compares values of matching global variables between dev4.substvar and predefined_dev4.substvar",
+        name = "Validate DEV4.substvar Variable Values with predefined_DEV4.substvar",
+        description = "Compares values of matching global variables between DEV4.substvar and predefined_DEV4.substvar",
         priority = Priority.CRITICAL
 )
 @BelongsToProfile(title = BWProcessQualityProfile.PROFILE_NAME, priority = Priority.CRITICAL)
 public class Dev4SubstvarValidationCheck extends AbstractProjectCheck {
 
-    public static final String RULE_KEY = "Dev4SubstvarValidation";
+    public static final String RULE_KEY = "DEV4SubstvarValidation";
     private static final Logger LOG = LoggerFactory.getLogger(Dev4SubstvarValidationCheck.class);
 
     @RuleProperty(
             key = "predefinedSubstvarPath",
-            description = "Path to predefined_dev4.substvar file",
-            defaultValue = "C:/Workspace_BW6/dev_branch/copernico_sonar/predefined_dev4.substvar",
+            description = "Path to predefined_DEV4.substvar file",
+            defaultValue = "C:/Workspace_BW6/dev_branch/copernico_sonar/predefined_DEV4.substvar",
             type = "TEXT"
     )
     protected String predefinedSubstvarPath;
@@ -53,22 +53,21 @@ public class Dev4SubstvarValidationCheck extends AbstractProjectCheck {
 			if (name.endsWith(".module") || name.endsWith(".parent")) continue;
 
 			File metaInfDir = new File(sibling, "META-INF");
-			File dev4File = findFileIgnoreCase(metaInfDir, "dev4.substvar");
+			File dev4File = findFile(metaInfDir, "DEV4.substvar");
 
 			if (dev4File != null) {
 				validateAgainstPredefined(dev4File);
 				return;
 			}
 		}
-
-		// If no dev4.substvar found in any app folder
-		reportIssueOnFile("Missing dev4.substvar in application folder");
+		
+		reportIssueOnFile("Missing DEV4.substvar in application folder");
 	}
 
 	private void validateAgainstPredefined(File dev4File) {
 		File predefinedFile = new File(predefinedSubstvarPath);
 		if (!predefinedFile.exists() || !predefinedFile.isFile() || !predefinedFile.canRead()) {
-			reportIssueOnFile("Invalid predefined_dev4.substvar file: " + predefinedSubstvarPath);
+			reportIssueOnFile("Invalid predefined_DEV4.substvar file: " + predefinedSubstvarPath);
 			return;
 		}
 
@@ -125,13 +124,13 @@ public class Dev4SubstvarValidationCheck extends AbstractProjectCheck {
         return null;
     }
 
-    private File findFileIgnoreCase(File dir, String fileName) {
+    private File findFile(File dir, String fileName) {
         if (dir == null || !dir.exists()) return null;
         File[] files = dir.listFiles();
         if (files == null) return null;
 
         for (File file : files) {
-            if (file.getName().equalsIgnoreCase(fileName)) {
+            if (file.getName().equals(fileName)) {
                 return file;
             }
         }

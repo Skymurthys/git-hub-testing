@@ -33,7 +33,7 @@ public class ProcessNamingConventionCheck extends AbstractProcessCheck {
 
         LOG.debug("Process Name: ["+process.getName()+"]");
         if (!process.getBasename().matches(regExpPattern)) {
-            reportIssueOnFile("The process " + process.getBasename() + " doesn't match the process naming convention ["+regExpPattern+"]");
+            reportIssueOnFile("Process name '" + process.getBasename() + "' doesn't match the camelCase pattern ["+regExpPattern+"]");
         }
         LOG.debug("Validation ended for rule: " + RULE_KEY);
     }

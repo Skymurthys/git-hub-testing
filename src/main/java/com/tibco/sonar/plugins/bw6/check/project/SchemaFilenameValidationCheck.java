@@ -56,7 +56,7 @@ public class SchemaFilenameValidationCheck extends AbstractProjectCheck {
             String fileName = xsd.getName();
             if (!fileName.matches(schemaFilenamePattern)) {
                 reportIssueOnFile("Invalid XSD filename: '" + fileName + "' in path: '" +
-                    xsd.getAbsolutePath() + "'. It must match the pattern: " + schemaFilenamePattern);
+                    xsd.getAbsolutePath() + "'. It must match the camelCase pattern ["+schemaFilenamePattern+"]");
             }
         }
     }

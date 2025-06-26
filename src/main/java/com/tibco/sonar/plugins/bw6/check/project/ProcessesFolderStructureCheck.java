@@ -52,7 +52,7 @@ public class ProcessesFolderStructureCheck extends AbstractProjectCheck {
             if (entry.isDirectory()) {
                 foundFolders.add(entry.getName());
             } else if (entry.isFile() && entry.getName().endsWith(".bwp")) {
-                reportIssueOnFile(".bwp file '" + entry.getName() + "' should not be directly under 'Processes' folder: " + processesDir.getAbsolutePath());
+                reportIssueOnFile("'" + entry.getName() + "' should not be directly under 'Processes' folder: " + processesDir.getAbsolutePath());
             }
         }
 

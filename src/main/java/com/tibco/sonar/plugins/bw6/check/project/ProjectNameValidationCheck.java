@@ -60,7 +60,7 @@ public class ProjectNameValidationCheck extends AbstractProjectCheck {
             boolean isValidLength = projectName.length() <= maxProjectNameLength;
 
             if (!isValidPattern) {
-                reportIssueOnFile("Project name '" + projectName + " doesn't match the project naming convention ["+projectNamePattern+"]");
+                reportIssueOnFile("Project name '" + projectName + "' doesn't match the project naming convention with kebab-case pattern ["+projectNamePattern+"]");
             }
 
             if (!isValidLength) {
