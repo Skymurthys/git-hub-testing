@@ -78,9 +78,13 @@ public class VariableNamingConventionCheck extends AbstractProjectCheck {
                 for (int i = 0; i < nodes.getLength(); i++) {
                     Element elem = (Element) nodes.item(i);
                     String name = getTagValue("name", elem);
-                    if (name != null && !name.startsWith("BW.") && !name.matches(variableNamePattern)) {
-                        invalidVars.add(name);
-                    }
+                    if (name != null && !name.startsWith("BW.")) {
+						String baseName = name.replaceAll("[/\\\\]+", "/");
+						String lastPart = baseName.substring(baseName.lastIndexOf("/") + 1);
+						if (!lastPart.matches(variableNamePattern)) {
+							invalidVars.add(name);  // Report full path, but validate only last part
+						}
+					}
                 }
             } else if (tagOrAttr != null) {
                 NodeList nodes = doc.getElementsByTagName(tagOrAttr);

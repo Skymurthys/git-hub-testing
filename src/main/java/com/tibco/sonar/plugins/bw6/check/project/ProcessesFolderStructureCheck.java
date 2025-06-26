@@ -52,13 +52,13 @@ public class ProcessesFolderStructureCheck extends AbstractProjectCheck {
             if (entry.isDirectory()) {
                 foundFolders.add(entry.getName());
             } else if (entry.isFile() && entry.getName().endsWith(".bwp")) {
-                reportIssueOnFile("'" + entry.getName() + "' should not be directly under 'Processes' folder: " + processesDir.getAbsolutePath());
+                reportIssueOnFile("'" + entry.getName() + "' should not be directly under 'Processes' folder");
             }
         }
 
         for (String required : requiredFolders) {
             if (!foundFolders.contains(required)) {
-                reportIssueOnFile("Missing required folder '" + required + "' under: " + processesDir.getAbsolutePath());
+                reportIssueOnFile("Missing required folder '" + required + "' under 'Processes'");
             }
         }
     }
