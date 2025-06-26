@@ -81,7 +81,7 @@ public class PTSubstvarValidationCheck extends AbstractProjectCheck {
 			if (PTVars.containsKey(varName)) {
 				String actualValue = PTVars.get(varName);
 				if (!Objects.equals(expectedValue, actualValue)) {
-					reportIssueOnFile("Variable '" + varName + "' mismatch. Expected: '" + expectedValue + "', Found: '" + actualValue + "'");
+					reportIssueOnFile("Variable '" + varName + "' mismatch. Expected: '" + expectedValue + "', Found: '" + actualValue + "' in PT.substvar");
 				}
 			}
 		}

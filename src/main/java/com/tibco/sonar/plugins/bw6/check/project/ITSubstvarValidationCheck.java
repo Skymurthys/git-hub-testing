@@ -81,7 +81,7 @@ public class ITSubstvarValidationCheck extends AbstractProjectCheck {
 			if (ITVars.containsKey(varName)) {
 				String actualValue = ITVars.get(varName);
 				if (!Objects.equals(expectedValue, actualValue)) {
-					reportIssueOnFile("Variable '" + varName + "' mismatch. Expected: '" + expectedValue + "', Found: '" + actualValue + "'");
+					reportIssueOnFile("Variable '" + varName + "' mismatch. Expected: '" + expectedValue + "', Found: '" + actualValue + "' in IT.substvar");
 				}
 			}
 		}
