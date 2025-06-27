@@ -73,14 +73,15 @@ public class DEV4SubstvarValidationCheck extends AbstractProjectCheck {
         Map<String, String> DEV4Vars = parseGlobalVariables(DEV4File);
         Map<String, String> predefinedVars = parseGlobalVariables(predefinedFile);
 
-        // Step 1: Full comparison excluding the three variables
+        // Full key-by-key comparison excluding USER, SCHEMA_NAME, PASSWORD
         for (Map.Entry<String, String> entry : predefinedVars.entrySet()) {
             String varName = entry.getKey();
 
             if (varName.equals("//common-om-connections///Connections/JDBC/Postgres_Appl/USER") ||
                 varName.equals("//common-om-connections///Connections/JDBC/Postgres_Appl/SCHEMA_NAME") ||
-                varName.equals("//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD")) {
-                continue; // Skip these three for now
+                varName.equals("//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD") ||
+                varName.equals("//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD_omselect")) {
+                continue; // Skip these keys from general comparison
             }
 
             String expectedValue = entry.getValue();
@@ -93,48 +94,58 @@ public class DEV4SubstvarValidationCheck extends AbstractProjectCheck {
             }
         }
 
-        // Step 2: Separate validation for USER, SCHEMA_NAME, PASSWORD
+        // Validate USER, SCHEMA_NAME, PASSWORD specifically
         validateUserSchemaPassword(DEV4Vars, predefinedVars);
     }
 
-	private void validateUserSchemaPassword(Map<String, String> DEV4Vars, Map<String, String> predefinedVars) {
+    private void validateUserSchemaPassword(Map<String, String> DEV4Vars, Map<String, String> predefinedVars) {
 
-		String userKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/USER";
-		String schemaKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/SCHEMA_NAME";
-		String passwordKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD";
+        String userKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/USER";
+        String schemaKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/SCHEMA_NAME";
+        String passwordKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD";
 
-		String user = DEV4Vars.get(userKey);
-		String schemaName = DEV4Vars.get(schemaKey);
-		String password = DEV4Vars.get(passwordKey);
+        String user = DEV4Vars.get(userKey);
+        String schemaName = DEV4Vars.get(schemaKey);
+        String password = DEV4Vars.get(passwordKey);
 
-		// ✅ If any of the keys are missing, skip the validation silently
-		if (user == null || schemaName == null || password == null) {
-			return;
+        // Report USER-SCHEMA mismatch in all cases if values are present
+		if (user != null && schemaName != null) {
+			String expectedSchema;
+
+			if ("omselect".equalsIgnoreCase(user)) {
+				expectedSchema = "omselect";
+			} else {
+				expectedSchema = predefinedVars.get(schemaKey);
+			}
+
+			if (expectedSchema != null && !expectedSchema.equals(schemaName)) {
+				reportIssueOnFile("SCHEMA NAME mismatch for USER '" + user + "'. Expected: '" + expectedSchema + "', Found: '" + schemaName + "' in DEV4.substvar");
+			}
 		}
 
-		// Validate SCHEMA_NAME matches USER
-		if (!user.equals(schemaName)) {
-			reportIssueOnFile("SCHEMA_NAME should match USER. Found USER: '" + user + "', SCHEMA_NAME: '" + schemaName + "' in DEV4.substvar");
-		}
+        // If any of the three are missing in DEV4 → skip password validation
+        if (user == null || schemaName == null || password == null) {
+            return;
+        }
 
-		// Determine password key in predefined file
-		String predefinedPasswordKey;
+        String predefinedPasswordKey;
+        if ("omselect".equalsIgnoreCase(user)) {
+            predefinedPasswordKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD_omselect";
+        } else {
+            predefinedPasswordKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD";
+        }
 
-		if ("omselect".equalsIgnoreCase(user)) {
-			predefinedPasswordKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD_omselect";
-		} else {
-			predefinedPasswordKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD";
-		}
+        String expectedPassword = predefinedVars.get(predefinedPasswordKey);
 
-		String expectedPassword = predefinedVars.get(predefinedPasswordKey);
+        // If predefined password key is missing → skip password validation
+        if (expectedPassword == null) {
+            return;
+        }
 
-		if (expectedPassword == null) {
-			return;
-		} else if (!expectedPassword.equals(password)) {
-			reportIssueOnFile("Password mismatch for USER '" + user + "'. Expected: '" + expectedPassword + "', Found: '" + password + "' in DEV4.substvar");
-		}
-	}
-
+        if (!expectedPassword.equals(password)) {
+            reportIssueOnFile("Password mismatch for USER '" + user + "'. Expected: '" + expectedPassword + "', Found: '" + password + "' in DEV4.substvar");
+        }
+    }
 
     private Map<String, String> parseGlobalVariables(File file) {
         Map<String, String> vars = new HashMap<>();
