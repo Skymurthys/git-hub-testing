@@ -22,7 +22,7 @@ import java.util.*;
 @Rule(
         key = DEV4SubstvarValidationCheck.RULE_KEY,
         name = "Validate DEV4.substvar Variable Values with predefined_DEV4.substvar",
-        description = "Compares values of matching global variables between DEV4.substvar and predefined_DEV4.substvar",
+        description = "Compares values of matching global variables between DEV4.substvar and predefined_DEV4.substvar with omselect validation",
         priority = Priority.CRITICAL
 )
 @BelongsToProfile(title = BWProcessQualityProfile.PROFILE_NAME, priority = Priority.CRITICAL)
@@ -39,51 +39,99 @@ public class DEV4SubstvarValidationCheck extends AbstractProjectCheck {
     )
     protected String predefinedSubstvarPath;
 
-	@Override
-	public void validate(ProjectSource source) {
-		File currentDir = source.getProject().getFile(); 
-		File parentDir = currentDir.getParentFile();    
+    @Override
+    public void validate(ProjectSource source) {
+        File currentDir = source.getProject().getFile();
+        File parentDir = currentDir.getParentFile();
 
-		// Search all sibling directories of currentDir, excluding .module/.parent
-		File[] siblings = parentDir.listFiles(File::isDirectory);
-		if (siblings == null) return;
+        File[] siblings = parentDir.listFiles(File::isDirectory);
+        if (siblings == null) return;
 
-		for (File sibling : siblings) {
-			String name = sibling.getName().toLowerCase();
-			if (name.endsWith(".module") || name.endsWith(".parent")) continue;
+        for (File sibling : siblings) {
+            String name = sibling.getName().toLowerCase();
+            if (name.endsWith(".module") || name.endsWith(".parent")) continue;
 
-			File metaInfDir = new File(sibling, "META-INF");
-			File DEV4File = findFile(metaInfDir, "DEV4.substvar");
+            File metaInfDir = new File(sibling, "META-INF");
+            File DEV4File = findFile(metaInfDir, "DEV4.substvar");
 
-			if (DEV4File != null) {
-				validateAgainstPredefined(DEV4File);
-				return;
-			}
-		}
-		
-		reportIssueOnFile("Missing DEV4.substvar in application folder");
-	}
+            if (DEV4File != null) {
+                validateAgainstPredefined(DEV4File);
+                return;
+            }
+        }
 
-	private void validateAgainstPredefined(File DEV4File) {
-		File predefinedFile = new File(predefinedSubstvarPath);
-		if (!predefinedFile.exists() || !predefinedFile.isFile() || !predefinedFile.canRead()) {
-			reportIssueOnFile("Invalid predefined_DEV4.substvar file: " + predefinedSubstvarPath);
+        reportIssueOnFile("Missing DEV4.substvar in application folder");
+    }
+
+    private void validateAgainstPredefined(File DEV4File) {
+        File predefinedFile = new File(predefinedSubstvarPath);
+        if (!predefinedFile.exists() || !predefinedFile.isFile() || !predefinedFile.canRead()) {
+            reportIssueOnFile("Invalid predefined_DEV4.substvar file: " + predefinedSubstvarPath);
+            return;
+        }
+
+        Map<String, String> DEV4Vars = parseGlobalVariables(DEV4File);
+        Map<String, String> predefinedVars = parseGlobalVariables(predefinedFile);
+
+        // Step 1: Full comparison excluding the three variables
+        for (Map.Entry<String, String> entry : predefinedVars.entrySet()) {
+            String varName = entry.getKey();
+
+            if (varName.equals("//common-om-connections///Connections/JDBC/Postgres_Appl/USER") ||
+                varName.equals("//common-om-connections///Connections/JDBC/Postgres_Appl/SCHEMA_NAME") ||
+                varName.equals("//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD")) {
+                continue; // Skip these three for now
+            }
+
+            String expectedValue = entry.getValue();
+
+            if (DEV4Vars.containsKey(varName)) {
+                String actualValue = DEV4Vars.get(varName);
+                if (!Objects.equals(expectedValue, actualValue)) {
+                    reportIssueOnFile("Variable '" + varName + "' mismatch. Expected: '" + expectedValue + "', Found: '" + actualValue + "' in DEV4.substvar");
+                }
+            }
+        }
+
+        // Step 2: Separate validation for USER, SCHEMA_NAME, PASSWORD
+        validateUserSchemaPassword(DEV4Vars, predefinedVars);
+    }
+
+	private void validateUserSchemaPassword(Map<String, String> DEV4Vars, Map<String, String> predefinedVars) {
+
+		String userKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/USER";
+		String schemaKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/SCHEMA_NAME";
+		String passwordKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD";
+
+		String user = DEV4Vars.get(userKey);
+		String schemaName = DEV4Vars.get(schemaKey);
+		String password = DEV4Vars.get(passwordKey);
+
+		// ✅ If any of the keys are missing, skip the validation silently
+		if (user == null || schemaName == null || password == null) {
 			return;
 		}
 
-		Map<String, String> DEV4Vars = parseGlobalVariables(DEV4File);
-		Map<String, String> predefinedVars = parseGlobalVariables(predefinedFile);
+		// Validate SCHEMA_NAME matches USER
+		if (!user.equals(schemaName)) {
+			reportIssueOnFile("SCHEMA_NAME should match USER. Found USER: '" + user + "', SCHEMA_NAME: '" + schemaName + "' in DEV4.substvar");
+		}
 
-		for (Map.Entry<String, String> entry : predefinedVars.entrySet()) {
-			String varName = entry.getKey();
-			String expectedValue = entry.getValue();
+		// Determine password key in predefined file
+		String predefinedPasswordKey;
 
-			if (DEV4Vars.containsKey(varName)) {
-				String actualValue = DEV4Vars.get(varName);
-				if (!Objects.equals(expectedValue, actualValue)) {
-					reportIssueOnFile("Variable '" + varName + "' mismatch. Expected: '" + expectedValue + "', Found: '" + actualValue + "' in DEV4.substvar");
-				}
-			}
+		if ("omselect".equalsIgnoreCase(user)) {
+			predefinedPasswordKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD_omselect";
+		} else {
+			predefinedPasswordKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD";
+		}
+
+		String expectedPassword = predefinedVars.get(predefinedPasswordKey);
+
+		if (expectedPassword == null) {
+			return;
+		} else if (!expectedPassword.equals(password)) {
+			reportIssueOnFile("Password mismatch for USER '" + user + "'. Expected: '" + expectedPassword + "', Found: '" + password + "' in DEV4.substvar");
 		}
 	}
 
