@@ -6,8 +6,6 @@ import com.tibco.sonar.plugins.bw6.source.ProjectSource;
 import com.tibco.utils.common.logger.Logger;
 import com.tibco.utils.common.logger.LoggerFactory;
 
-import com.encryptdecrypt.EncryptDecryptString; // Import your decryption plugin
-
 import org.sonar.check.BelongsToProfile;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
@@ -41,68 +39,56 @@ public class DEV4SubstvarValidationCheck extends AbstractProjectCheck {
     )
     protected String predefinedSubstvarPath;
 
-    @Override
-    public void validate(ProjectSource source) {
-        File currentDir = source.getProject().getFile();
-        File parentDir = currentDir.getParentFile();
+	@Override
+	public void validate(ProjectSource source) {
+		File currentDir = source.getProject().getFile(); 
+		File parentDir = currentDir.getParentFile();    
 
-        // Search sibling directories excluding .module and .parent
-        File[] siblings = parentDir.listFiles(File::isDirectory);
-        if (siblings == null) return;
+		// Search all sibling directories of currentDir, excluding .module/.parent
+		File[] siblings = parentDir.listFiles(File::isDirectory);
+		if (siblings == null) return;
 
-        for (File sibling : siblings) {
-            String name = sibling.getName().toLowerCase();
-            if (name.endsWith(".module") || name.endsWith(".parent")) continue;
+		for (File sibling : siblings) {
+			String name = sibling.getName().toLowerCase();
+			if (name.endsWith(".module") || name.endsWith(".parent")) continue;
 
-            File metaInfDir = new File(sibling, "META-INF");
-            File DEV4File = findFile(metaInfDir, "DEV4.substvar");
+			File metaInfDir = new File(sibling, "META-INF");
+			File DEV4File = findFile(metaInfDir, "DEV4.substvar");
 
-            if (DEV4File != null) {
-                validateAgainstPredefined(DEV4File);
-                return;
-            }
-        }
+			if (DEV4File != null) {
+				validateAgainstPredefined(DEV4File);
+				return;
+			}
+		}
+		
+		reportIssueOnFile("Missing DEV4.substvar in application folder");
+	}
 
-        reportIssueOnFile("Missing DEV4.substvar in application folder");
-    }
+	private void validateAgainstPredefined(File DEV4File) {
+		File predefinedFile = new File(predefinedSubstvarPath);
+		if (!predefinedFile.exists() || !predefinedFile.isFile() || !predefinedFile.canRead()) {
+			reportIssueOnFile("Invalid predefined_DEV4.substvar file: " + predefinedSubstvarPath);
+			return;
+		}
 
-    private void validateAgainstPredefined(File DEV4File) {
-        File predefinedFile = new File(predefinedSubstvarPath);
-        if (!predefinedFile.exists() || !predefinedFile.isFile() || !predefinedFile.canRead()) {
-            reportIssueOnFile("Invalid predefined_DEV4.substvar file: " + predefinedSubstvarPath);
-            return;
-        }
+		Map<String, String> DEV4Vars = parseGlobalVariables(DEV4File);
+		Map<String, String> predefinedVars = parseGlobalVariables(predefinedFile);
 
-        Map<String, String> DEV4Types = new HashMap<>();
-        Map<String, String> predefinedTypes = new HashMap<>();
+		for (Map.Entry<String, String> entry : predefinedVars.entrySet()) {
+			String varName = entry.getKey();
+			String expectedValue = entry.getValue();
 
-        Map<String, String> DEV4Vars = parseGlobalVariables(DEV4File, DEV4Types);
-        Map<String, String> predefinedVars = parseGlobalVariables(predefinedFile, predefinedTypes);
+			if (DEV4Vars.containsKey(varName)) {
+				String actualValue = DEV4Vars.get(varName);
+				if (!Objects.equals(expectedValue, actualValue)) {
+					reportIssueOnFile("Variable '" + varName + "' mismatch. Expected: '" + expectedValue + "', Found: '" + actualValue + "' in DEV4.substvar");
+				}
+			}
+		}
+	}
 
-        for (Map.Entry<String, String> entry : predefinedVars.entrySet()) {
-            String varName = entry.getKey();
-            String expectedValue = entry.getValue();
 
-            if (DEV4Vars.containsKey(varName)) {
-                String actualValue = DEV4Vars.get(varName);
-                String varType = DEV4Types.get(varName);
-
-                if ("Password".equalsIgnoreCase(varType)) {
-                    String decryptedActual = decrypt(actualValue);
-
-                    if (!Objects.equals(expectedValue, decryptedActual)) {
-                        reportIssueOnFile("Password variable '" + varName + "' mismatch. Expected: '" + expectedValue + "', Found: '" + decryptedActual + "' in DEV4.substvar");
-                    }
-                } else {
-                    if (!Objects.equals(expectedValue, actualValue)) {
-                        reportIssueOnFile("Variable '" + varName + "' mismatch. Expected: '" + expectedValue + "', Found: '" + actualValue + "' in DEV4.substvar");
-                    }
-                }
-            }
-        }
-    }
-
-    private Map<String, String> parseGlobalVariables(File file, Map<String, String> variableTypes) {
+    private Map<String, String> parseGlobalVariables(File file) {
         Map<String, String> vars = new HashMap<>();
         try {
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -119,13 +105,8 @@ public class DEV4SubstvarValidationCheck extends AbstractProjectCheck {
                     Element elem = (Element) node;
                     String name = getTagValue("name", elem);
                     String value = getTagValue("value", elem);
-                    String type = getTagValue("type", elem);
-
                     if (name != null) {
                         vars.put(name.trim(), value != null ? value.trim() : "");
-                        if (type != null) {
-                            variableTypes.put(name.trim(), type.trim());
-                        }
                     }
                 }
             }
@@ -154,18 +135,6 @@ public class DEV4SubstvarValidationCheck extends AbstractProjectCheck {
             }
         }
         return null;
-    }
-
-    /**
-     * Decrypt using the existing TIBCO EncryptDecryptString Plugin
-     */
-    private String decrypt(String encryptedValue) {
-        try {
-            return EncryptDecryptString.getDecryptedString(encryptedValue);
-        } catch (Exception e) {
-            reportIssueOnFile("Decryption failed for value: " + encryptedValue + " - " + e.getMessage());
-            return encryptedValue; // Return as-is if decryption fails
-        }
     }
 
     @Override
