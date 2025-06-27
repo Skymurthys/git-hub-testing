@@ -6,14 +6,14 @@ import com.tibco.sonar.plugins.bw6.source.ProjectSource;
 import com.tibco.utils.common.logger.Logger;
 import com.tibco.utils.common.logger.LoggerFactory;
 
+import com.encryptdecrypt.EncryptDecryptString; // Import your decryption plugin
+
 import org.sonar.check.BelongsToProfile;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
 import org.w3c.dom.*;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -46,6 +46,7 @@ public class DEV4SubstvarValidationCheck extends AbstractProjectCheck {
         File currentDir = source.getProject().getFile();
         File parentDir = currentDir.getParentFile();
 
+        // Search sibling directories excluding .module and .parent
         File[] siblings = parentDir.listFiles(File::isDirectory);
         if (siblings == null) return;
 
@@ -155,12 +156,15 @@ public class DEV4SubstvarValidationCheck extends AbstractProjectCheck {
         return null;
     }
 
+    /**
+     * Decrypt using the existing TIBCO EncryptDecryptString Plugin
+     */
     private String decrypt(String encryptedValue) {
         try {
-            return TibcoObfuscationDecryptor.decrypt(encryptedValue);
+            return EncryptDecryptString.getDecryptedString(encryptedValue);
         } catch (Exception e) {
             reportIssueOnFile("Decryption failed for value: " + encryptedValue + " - " + e.getMessage());
-            return encryptedValue; // fallback
+            return encryptedValue; // Return as-is if decryption fails
         }
     }
 
@@ -172,26 +176,5 @@ public class DEV4SubstvarValidationCheck extends AbstractProjectCheck {
     @Override
     public Logger getLogger() {
         return LOG;
-    }
-
-    // 🔒 Inner class added directly inside the same file
-    public static class TibcoObfuscationDecryptor {
-
-        private static final byte[] KEY = "Obfuscation".getBytes(); // TIBCO fixed key
-
-        public static String decrypt(String obfuscated) throws Exception {
-            if (obfuscated.startsWith("#!")) {
-                obfuscated = obfuscated.substring(2);
-            }
-
-            byte[] encryptedBytes = java.util.Base64.getDecoder().decode(obfuscated);
-
-            javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance("Blowfish/ECB/PKCS5Padding");
-            javax.crypto.spec.SecretKeySpec keySpec = new javax.crypto.spec.SecretKeySpec(KEY, "Blowfish");
-            cipher.init(javax.crypto.Cipher.DECRYPT_MODE, keySpec);
-
-            byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
-            return new String(decryptedBytes, "UTF-8");
-        }
     }
 }
