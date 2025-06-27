@@ -6,6 +6,8 @@ import com.tibco.sonar.plugins.bw6.source.ProjectSource;
 import com.tibco.utils.common.logger.Logger;
 import com.tibco.utils.common.logger.LoggerFactory;
 
+import com.tibco.security.ObfuscationEngine;
+
 import org.sonar.check.BelongsToProfile;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
@@ -22,7 +24,7 @@ import java.util.*;
 @Rule(
         key = DEV4SubstvarValidationCheck.RULE_KEY,
         name = "Validate DEV4.substvar Variable Values with predefined_DEV4.substvar",
-        description = "Compares values of matching global variables between DEV4.substvar and predefined_DEV4.substvar",
+        description = "Compares values of matching global variables between DEV4.substvar and predefined_DEV4.substvar, decrypting passwords before comparison.",
         priority = Priority.CRITICAL
 )
 @BelongsToProfile(title = BWProcessQualityProfile.PROFILE_NAME, priority = Priority.CRITICAL)
@@ -155,13 +157,18 @@ public class DEV4SubstvarValidationCheck extends AbstractProjectCheck {
     }
 
     /**
-     * 🚩 Decrypt DEV4.substvar Password variables here
-     * Replace this with your actual decryption logic.
+     * Decrypt DEV4.substvar Password variables using TIBCO ObfuscationEngine
      */
     private String decrypt(String encryptedValue) {
-        // TODO: Replace this with actual decryption logic
-        // Example: return YourDecryptionUtil.decrypt(encryptedValue);
-        return encryptedValue; // Placeholder: returns encrypted as-is for now
+        try {
+            if (encryptedValue != null && encryptedValue.startsWith("#!")) {
+                return ObfuscationEngine.decrypt(encryptedValue); // Requires TIBCO Security Library
+            }
+            return encryptedValue; // Return as-is if not encrypted
+        } catch (Exception e) {
+            reportIssueOnFile("Error decrypting value: " + e.getMessage());
+            return encryptedValue; // If decryption fails, return the original
+        }
     }
 
     @Override
