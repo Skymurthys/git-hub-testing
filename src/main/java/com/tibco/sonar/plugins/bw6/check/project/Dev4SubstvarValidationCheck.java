@@ -34,7 +34,7 @@ public class DEV4SubstvarValidationCheck extends AbstractProjectCheck {
     @RuleProperty(
             key = "predefinedSubstvarPath",
             description = "Path to predefined_DEV4.substvar file",
-            defaultValue = "C:/Workspace_BW6/dev_branch/copernico_sonar/predefined_DEV4.substvar",
+            defaultValue = "C:/SonarValidation/GV/predefined_DEV4.substvar",
             type = "TEXT"
     )
     protected String predefinedSubstvarPath;
