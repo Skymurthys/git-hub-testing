@@ -22,7 +22,7 @@ import java.util.*;
 @Rule(
         key = STSubstvarValidationCheck.RULE_KEY,
         name = "Validate ST.substvar Variable Values with predefined_ST.substvar",
-        description = "Compares values of matching global variables between ST.substvar and predefined_ST.substvar",
+        description = "Compares values of matching global variables between ST.substvar and predefined_ST.substvar with omselect validation",
         priority = Priority.CRITICAL
 )
 @BelongsToProfile(title = BWProcessQualityProfile.PROFILE_NAME, priority = Priority.CRITICAL)
@@ -39,54 +39,113 @@ public class STSubstvarValidationCheck extends AbstractProjectCheck {
     )
     protected String predefinedSubstvarPath;
 
-	@Override
-	public void validate(ProjectSource source) {
-		File currentDir = source.getProject().getFile(); 
-		File parentDir = currentDir.getParentFile();    
+    @Override
+    public void validate(ProjectSource source) {
+        File currentDir = source.getProject().getFile();
+        File parentDir = currentDir.getParentFile();
 
-		// Search all sibling directories of currentDir, excluding .module/.parent
-		File[] siblings = parentDir.listFiles(File::isDirectory);
-		if (siblings == null) return;
+        File[] siblings = parentDir.listFiles(File::isDirectory);
+        if (siblings == null) return;
 
-		for (File sibling : siblings) {
-			String name = sibling.getName().toLowerCase();
-			if (name.endsWith(".module") || name.endsWith(".parent")) continue;
+        for (File sibling : siblings) {
+            String name = sibling.getName().toLowerCase();
+            if (name.endsWith(".module") || name.endsWith(".parent")) continue;
 
-			File metaInfDir = new File(sibling, "META-INF");
-			File STFile = findFile(metaInfDir, "ST.substvar");
+            File metaInfDir = new File(sibling, "META-INF");
+            File STFile = findFile(metaInfDir, "ST.substvar");
 
-			if (STFile != null) {
-				validateAgainstPredefined(STFile);
-				return;
+            if (STFile != null) {
+                validateAgainstPredefined(STFile);
+                return;
+            }
+        }
+
+        reportIssueOnFile("Missing ST.substvar in application folder");
+    }
+
+    private void validateAgainstPredefined(File STFile) {
+        File predefinedFile = new File(predefinedSubstvarPath);
+        if (!predefinedFile.exists() || !predefinedFile.isFile() || !predefinedFile.canRead()) {
+            reportIssueOnFile("Invalid predefined_ST.substvar file: " + predefinedSubstvarPath);
+            return;
+        }
+
+        Map<String, String> STVars = parseGlobalVariables(STFile);
+        Map<String, String> predefinedVars = parseGlobalVariables(predefinedFile);
+
+        // Full key-by-key comparison excluding USER, SCHEMA_NAME, PASSWORD
+        for (Map.Entry<String, String> entry : predefinedVars.entrySet()) {
+            String varName = entry.getKey();
+
+            if (varName.equals("//common-om-connections///Connections/JDBC/Postgres_Appl/USER") ||
+                varName.equals("//common-om-connections///Connections/JDBC/Postgres_Appl/SCHEMA_NAME") ||
+                varName.equals("//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD") ||
+                varName.equals("//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD_omselect")) {
+                continue; // Skip these keys from general comparison
+            }
+
+            String expectedValue = entry.getValue();
+
+            if (STVars.containsKey(varName)) {
+                String actualValue = STVars.get(varName);
+                if (!Objects.equals(expectedValue, actualValue)) {
+                    reportIssueOnFile("Variable '" + varName + "' mismatch. Expected: '" + expectedValue + "', Found: '" + actualValue + "' in ST.substvar");
+                }
+            }
+        }
+
+        // Validate USER, SCHEMA_NAME, PASSWORD specifically
+        validateUserSchemaPassword(STVars, predefinedVars);
+    }
+
+    private void validateUserSchemaPassword(Map<String, String> STVars, Map<String, String> predefinedVars) {
+
+        String userKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/USER";
+        String schemaKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/SCHEMA_NAME";
+        String passwordKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD";
+
+        String user = STVars.get(userKey);
+        String schemaName = STVars.get(schemaKey);
+        String password = STVars.get(passwordKey);
+
+        // Report USER-SCHEMA mismatch in all cases if values are present
+		if (user != null && schemaName != null) {
+			String expectedSchema;
+
+			if ("omselect".equalsIgnoreCase(user)) {
+				expectedSchema = "omselect";
+			} else {
+				expectedSchema = predefinedVars.get(schemaKey);
+			}
+
+			if (expectedSchema != null && !expectedSchema.equals(schemaName)) {
+				reportIssueOnFile("SCHEMA NAME mismatch for USER '" + user + "'. Expected: '" + expectedSchema + "', Found: '" + schemaName + "' in ST.substvar");
 			}
 		}
-		
-		reportIssueOnFile("Missing ST.substvar in application folder");
-	}
 
-	private void validateAgainstPredefined(File STFile) {
-		File predefinedFile = new File(predefinedSubstvarPath);
-		if (!predefinedFile.exists() || !predefinedFile.isFile() || !predefinedFile.canRead()) {
-			reportIssueOnFile("Invalid predefined_ST.substvar file: " + predefinedSubstvarPath);
-			return;
-		}
+        // If any of the three are missing in ST → skip password validation
+        if (user == null || schemaName == null || password == null) {
+            return;
+        }
 
-		Map<String, String> STVars = parseGlobalVariables(STFile);
-		Map<String, String> predefinedVars = parseGlobalVariables(predefinedFile);
+        String predefinedPasswordKey;
+        if ("omselect".equalsIgnoreCase(user)) {
+            predefinedPasswordKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD_omselect";
+        } else {
+            predefinedPasswordKey = "//common-om-connections///Connections/JDBC/Postgres_Appl/PASSWORD";
+        }
 
-		for (Map.Entry<String, String> entry : predefinedVars.entrySet()) {
-			String varName = entry.getKey();
-			String expectedValue = entry.getValue();
+        String expectedPassword = predefinedVars.get(predefinedPasswordKey);
 
-			if (STVars.containsKey(varName)) {
-				String actualValue = STVars.get(varName);
-				if (!Objects.equals(expectedValue, actualValue)) {
-					reportIssueOnFile("Variable '" + varName + "' mismatch. Expected: '" + expectedValue + "', Found: '" + actualValue + "' in ST.substvar");
-				}
-			}
-		}
-	}
+        // If predefined password key is missing → skip password validation
+        if (expectedPassword == null) {
+            return;
+        }
 
+        if (!expectedPassword.equals(password)) {
+            reportIssueOnFile("Password mismatch for USER '" + user + "'. Expected: '" + expectedPassword + "', Found: '" + password + "' in ST.substvar");
+        }
+    }
 
     private Map<String, String> parseGlobalVariables(File file) {
         Map<String, String> vars = new HashMap<>();
