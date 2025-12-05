@@ -34,7 +34,7 @@ public class GlobalVariableNamingConventionCheck extends AbstractProjectCheck {
     @RuleProperty(
         key = "globalVariableNamePattern",
         description = "Regular expression for global variable naming convention",
-        defaultValue = "^[A-Z0-9_]+$",   // UPPERCASE_WITH_UNDERSCORE
+        defaultValue = "^[a-z]+([A-Z][a-z0-9]+)*$",   
         type = "TEXT"
     )
     protected String globalVariableNamePattern;
@@ -90,7 +90,7 @@ public class GlobalVariableNamingConventionCheck extends AbstractProjectCheck {
                 for (String var : invalidVars) {
                     reportIssueOnFile(
                         "Invalid global variable name '" + var + "' in " + file.getName()
-                        + ". Must follow UPPERCASE_WITH_UNDERSCORE pattern [" + globalVariableNamePattern + "]"
+                        + ". Must follow camelCase pattern [" + globalVariableNamePattern + "]"
                     );
                 }
             }
